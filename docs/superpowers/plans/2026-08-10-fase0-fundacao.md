@@ -20,6 +20,7 @@
 - Every curated content item (`Principle`, `ChecklistItem`) must carry `sourceUrl` and `license: "CC BY-SA 4.0"` — PRD section 1.5.
 - No scraping at runtime or build time — ADR 0001, Decision 1. Content is fetched and transcribed once, by hand, during Task 3/4 below, then committed as static JSON.
 - Prisma schema must include all entities from spec section 6 (including Fase 1a/1b tables) even though most have no endpoints yet — spec section 6, acceptance criterion in section 9.
+- Every task must leave its own tests green. No task commits with a failing test as its final state — where a later task supplies real content that an earlier task's tests will eventually also check, the earlier task tests against fixture data instead, and the later task swaps the fixture for real content while adding its own additional assertions (see Tasks 2/3/4).
 
 ---
 
@@ -66,14 +67,13 @@ sec-champs-trail/
         ├── package.json
         ├── src/types.ts
         ├── src/index.ts
-        ├── principles/01-*.json … 10-*.json
-        ├── checklists/recruitment.json
-        ├── checklists/development-retention.json
+        ├── principles/*.json (fixtures in Task 2, replaced by 10 real files in Task 3)
+        ├── checklists/*.json (fixture in Task 2, replaced by real recruitment/development-retention files in Task 4)
         └── test/schema.test.ts
 ```
 
 - `packages/owasp-content` has zero dependencies beyond its own type definitions — it is loaded by `apps/api`'s seed script via a normal workspace import (`@sec-champs-trail/owasp-content`).
-- `apps/api/src/config/env.validation.ts` is the single place that knows which env vars are required; `main.ts` calls it before the Nest app boots.
+- `apps/api/src/config/env.validation.ts` is the single place that knows which env vars are required; `main.ts` calls it before the Nest app boots. It is implemented fully in Task 6, alongside the rest of the app scaffold — there is no intermediate stub.
 - `apps/api/src/bootstrap/bootstrap-admin.ts` is a standalone script (run via `npm run bootstrap:admin -w apps/api`), not an HTTP endpoint — this is what keeps "no public create-organization route" true.
 
 ---
@@ -138,7 +138,7 @@ JWT_SECRET=change-me-in-production
 - [ ] **Step 5: Verify workspaces resolve**
 
 Run: `mkdir -p apps/api apps/web packages/owasp-content && npm install`
-Expected: `npm install` completes without error (no workspace has a `package.json` yet, so npm just creates `node_modules/` and `package-lock.json` for the root). If npm errors because a workspace folder has no `package.json`, remove the empty dirs — Task 2/6/12 will recreate them with real content.
+Expected: `npm install` completes without error (no workspace has a `package.json` yet, so npm just creates `node_modules/` and `package-lock.json` for the root). If npm errors because a workspace folder has no `package.json`, remove the empty dirs — Task 2/6/11 will recreate them with real content.
 
 - [ ] **Step 6: Commit**
 
@@ -149,17 +149,20 @@ git commit -m "Scaffold npm workspaces monorepo"
 
 ---
 
-### Task 2: `packages/owasp-content` — types and schema validation harness
+### Task 2: `packages/owasp-content` — types, loader, and schema validation harness (fixture data)
 
 **Files:**
 - Create: `packages/owasp-content/package.json`
 - Create: `packages/owasp-content/tsconfig.json`
 - Create: `packages/owasp-content/src/types.ts`
 - Create: `packages/owasp-content/src/index.ts`
+- Create: `packages/owasp-content/principles/00-fixture-a.json`
+- Create: `packages/owasp-content/principles/00-fixture-b.json`
+- Create: `packages/owasp-content/checklists/00-fixture.json`
 - Test: `packages/owasp-content/test/schema.test.ts`
 
 **Interfaces:**
-- Produces: `Principle` type (`id`, `order`, `title`, `description`, `sourceUrl`, `license`), `ChecklistItem` type (`id`, `principleId`, `phase: "recruitment" | "development-retention"`, `title`, `description`, `sourceUrl`, `license`), and `loadPrinciples(): Principle[]` / `loadChecklistItems(): ChecklistItem[]` — these two functions are what `apps/api`'s seed script (Task 9) imports.
+- Produces: `Principle` type (`id`, `order`, `title`, `description`, `sourceUrl`, `license`), `ChecklistItem` type (`id`, `principleId`, `phase: "recruitment" | "development-retention"`, `title`, `description`, `sourceUrl`, `license`), and `loadPrinciples(): Principle[]` / `loadChecklistItems(): ChecklistItem[]` — these two functions are what `apps/api`'s seed script (Task 8) imports. This task ships with 2 fixture principles and 1 fixture checklist item so the deliverable is fully green on its own; Task 3 deletes the fixture principles and replaces them with the 10 real curated ones, Task 4 deletes the fixture checklist item and replaces it with the real recruitment/development-retention content.
 - Consumes: nothing (leaf package).
 
 - [ ] **Step 1: Create `packages/owasp-content/package.json`**
@@ -226,7 +229,7 @@ export interface ChecklistItem {
 }
 ```
 
-- [ ] **Step 4: Write the failing test for the loader functions**
+- [ ] **Step 4: Write the failing test for the loader mechanics (fixture-scoped, not content-scoped)**
 
 ```typescript
 // packages/owasp-content/test/schema.test.ts
@@ -236,13 +239,13 @@ import type { ChecklistPhase } from "../src/types";
 
 const VALID_PHASES: ChecklistPhase[] = ["recruitment", "development-retention"];
 
-describe("owasp-content schema", () => {
-  it("loads exactly 10 principles, ordered 1-10, each with attribution fields", () => {
+describe("owasp-content loader mechanics", () => {
+  it("loads principles sorted by their order field, each with attribution fields", () => {
     const principles = loadPrinciples();
-    expect(principles).toHaveLength(10);
+    expect(principles.length).toBeGreaterThanOrEqual(1);
 
-    const orders = principles.map((p) => p.order).sort((a, b) => a - b);
-    expect(orders).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const orders = principles.map((p) => p.order);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
 
     for (const p of principles) {
       expect(p.id).toMatch(/^[a-z0-9-]+$/);
@@ -258,19 +261,12 @@ describe("owasp-content schema", () => {
     const principleIds = new Set(principles.map((p) => p.id));
     const items = loadChecklistItems();
 
-    expect(items.length).toBeGreaterThan(0);
+    expect(items.length).toBeGreaterThanOrEqual(1);
     for (const item of items) {
       expect(principleIds.has(item.principleId)).toBe(true);
       expect(VALID_PHASES).toContain(item.phase);
       expect(item.sourceUrl).toMatch(/^https:\/\/securitychampions\.owasp\.org\//);
       expect(item.license).toBe("CC BY-SA 4.0");
-    }
-  });
-
-  it("has at least one checklist item per phase", () => {
-    const items = loadChecklistItems();
-    for (const phase of VALID_PHASES) {
-      expect(items.some((i) => i.phase === phase)).toBe(true);
     }
   });
 });
@@ -314,20 +310,57 @@ export function loadChecklistItems(): ChecklistItem[] {
 export type { ChecklistItem, ChecklistPhase, Principle } from "./types";
 ```
 
-- [ ] **Step 7: Create empty `principles/` and `checklists/` directories so the loader doesn't throw**
+- [ ] **Step 7: Add fixture content so the loader has real files to read**
 
-Run: `mkdir -p packages/owasp-content/principles packages/owasp-content/checklists && touch packages/owasp-content/principles/.gitkeep packages/owasp-content/checklists/.gitkeep`
+```json
+// packages/owasp-content/principles/00-fixture-a.json
+{
+  "id": "fixture-principle-a",
+  "order": 1,
+  "title": "Fixture Principle A",
+  "description": "Placeholder principle used only to exercise the loader in Task 2. Replaced by real curated content in Task 3.",
+  "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
+  "license": "CC BY-SA 4.0"
+}
+```
 
-Expected: the test from Step 4 still fails at this point (0 principles, not 10) — that's expected, real content is curated in Task 3/4. Confirm the failure message now says "expected 0 to have length 10" rather than a module-resolution error, which proves the loader itself works.
+```json
+// packages/owasp-content/principles/00-fixture-b.json
+{
+  "id": "fixture-principle-b",
+  "order": 2,
+  "title": "Fixture Principle B",
+  "description": "Placeholder principle used only to exercise the loader in Task 2. Replaced by real curated content in Task 3.",
+  "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
+  "license": "CC BY-SA 4.0"
+}
+```
+
+```json
+// packages/owasp-content/checklists/00-fixture.json
+[
+  {
+    "id": "fixture-checklist-item",
+    "principleId": "fixture-principle-a",
+    "phase": "recruitment",
+    "title": "Fixture checklist item",
+    "description": "Placeholder checklist item used only to exercise the loader in Task 2. Replaced by real curated content in Task 4.",
+    "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
+    "license": "CC BY-SA 4.0"
+  }
+]
+```
+
+- [ ] **Step 8: Run the test to verify it passes**
 
 Run: `npx vitest run --root packages/owasp-content`
-Expected: FAIL on the count assertions only (loader works, content is empty).
+Expected: PASS (both tests, against fixture data).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add packages/owasp-content
-git commit -m "Add owasp-content package: types, loader, schema test harness"
+git commit -m "Add owasp-content package: types, loader, schema test harness (fixture data)"
 ```
 
 ---
@@ -336,10 +369,13 @@ git commit -m "Add owasp-content package: types, loader, schema test harness"
 
 **Files:**
 - Create: `packages/owasp-content/principles/01-be-passionate-about-security.json` … `10-anticipate-personnel-changes.json` (10 files)
+- Delete: `packages/owasp-content/principles/00-fixture-a.json`, `packages/owasp-content/principles/00-fixture-b.json`
+- Modify: `packages/owasp-content/checklists/00-fixture.json` (repoint `principleId` at a real curated principle instead of the deleted fixture — see Step 3)
+- Modify: `packages/owasp-content/test/schema.test.ts` (add a content-completeness assertion)
 
 **Interfaces:**
 - Consumes: `Principle` type from Task 2 (`src/types.ts`).
-- Produces: the 10 JSON files that Task 2's test (Step 4) asserts on, and that Task 9's seed script reads via `loadPrinciples()`.
+- Produces: the 10 JSON files that this task's added test assertion checks, and that Task 8's seed script reads via `loadPrinciples()`.
 
 This is manual curation, not code generation — ADR 0001 Decision 1 and spec section 5 are explicit that transcription must be done by a human/agent reading the real page, not fabricated. Do not invent description text.
 
@@ -364,19 +400,48 @@ For each principle, WebFetch its real URL from Step 1 asking for the full title 
 
 Repeat for all 10, with `id` as a stable kebab-case slug of the title and `order` 1 through 10 matching the manifesto's own ordering. File names: `01-be-passionate-about-security.json` through `10-anticipate-personnel-changes.json` (zero-padded order prefix keeps directory listing sorted, though `loadPrinciples()` sorts by the `order` field regardless of filename).
 
-- [ ] **Step 3: Remove the placeholder `.gitkeep`**
-
-Run: `rm packages/owasp-content/principles/.gitkeep`
-
-- [ ] **Step 4: Run the schema test to verify it passes for principles**
-
-Run: `npx vitest run --root packages/owasp-content -t "loads exactly 10 principles"`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Remove the fixture principles and repoint the fixture checklist item**
 
 ```bash
-git add packages/owasp-content/principles
+rm packages/owasp-content/principles/00-fixture-a.json packages/owasp-content/principles/00-fixture-b.json
+```
+
+`packages/owasp-content/checklists/00-fixture.json` (from Task 2) has `"principleId": "fixture-principle-a"`, which no longer exists. Edit that field to point at the real `id` of principle #1 (`"be-passionate-about-security"`) so Task 2's checklist test keeps passing until Task 4 replaces this fixture file for real:
+
+```json
+[
+  {
+    "id": "fixture-checklist-item",
+    "principleId": "be-passionate-about-security",
+    "phase": "recruitment",
+    "title": "Fixture checklist item",
+    "description": "Placeholder checklist item used only to exercise the loader in Task 2. Replaced by real curated content in Task 4.",
+    "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
+    "license": "CC BY-SA 4.0"
+  }
+]
+```
+
+- [ ] **Step 4: Add the content-completeness assertion to the schema test**
+
+```typescript
+// packages/owasp-content/test/schema.test.ts — add this additional test
+it("has exactly 10 curated principles, ordered 1-10", () => {
+  const principles = loadPrinciples();
+  expect(principles).toHaveLength(10);
+  expect(principles.map((p) => p.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+```
+
+- [ ] **Step 5: Run the full schema test suite**
+
+Run: `npx vitest run --root packages/owasp-content`
+Expected: PASS (all three tests — the two loader-mechanics tests from Task 2 still pass against real+fixture data, plus the new count assertion).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add packages/owasp-content/principles packages/owasp-content/checklists/00-fixture.json packages/owasp-content/test/schema.test.ts
 git commit -m "Curate OWASP Security Champions Manifesto (10 principles)"
 ```
 
@@ -387,10 +452,12 @@ git commit -m "Curate OWASP Security Champions Manifesto (10 principles)"
 **Files:**
 - Create: `packages/owasp-content/checklists/recruitment.json`
 - Create: `packages/owasp-content/checklists/development-retention.json`
+- Delete: `packages/owasp-content/checklists/00-fixture.json`
+- Modify: `packages/owasp-content/test/schema.test.ts` (add phase-coverage assertion)
 
 **Interfaces:**
 - Consumes: `ChecklistItem` type from Task 2; the 10 `principleId` slugs curated in Task 3 (each item must reference one of them).
-- Produces: the two files Task 2's test (Step 4) asserts on, consumed by Task 9's seed script.
+- Produces: the two real files this task's added test assertion checks, consumed by Task 8's seed script.
 
 - [ ] **Step 1: Look for a structured checklist on the live site**
 
@@ -418,19 +485,32 @@ Each item's `sourceUrl` in this fallback is the principle page it was derived fr
 
 Produce a reasonable number of items per phase (aim for at least 3-5 per phase to be useful for Fase 1a's checklist library) across `recruitment.json` and `development-retention.json`, each file being a JSON array of `ChecklistItem` objects.
 
-- [ ] **Step 3: Remove the placeholder `.gitkeep`**
-
-Run: `rm packages/owasp-content/checklists/.gitkeep`
-
-- [ ] **Step 4: Run the full schema test suite**
-
-Run: `npx vitest run --root packages/owasp-content`
-Expected: PASS (all three tests from Task 2 Step 4).
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Remove the fixture checklist file**
 
 ```bash
-git add packages/owasp-content/checklists
+rm packages/owasp-content/checklists/00-fixture.json
+```
+
+- [ ] **Step 4: Add the phase-coverage assertion to the schema test**
+
+```typescript
+// packages/owasp-content/test/schema.test.ts — add this additional test
+it("has at least one checklist item per phase", () => {
+  const items = loadChecklistItems();
+  expect(items.some((i) => i.phase === "recruitment")).toBe(true);
+  expect(items.some((i) => i.phase === "development-retention")).toBe(true);
+});
+```
+
+- [ ] **Step 5: Run the full schema test suite**
+
+Run: `npx vitest run --root packages/owasp-content`
+Expected: PASS (all four tests).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add packages/owasp-content/checklists packages/owasp-content/test/schema.test.ts
 git commit -m "Curate OWASP checklists for recruitment and development-retention phases"
 ```
 
@@ -477,7 +557,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 
 ---
 
-### Task 6: `apps/api` — NestJS scaffold with a health endpoint
+### Task 6: `apps/api` — NestJS scaffold with a health endpoint and fail-fast environment validation
 
 **Files:**
 - Create: `apps/api/package.json`
@@ -486,10 +566,12 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 - Create: `apps/api/src/main.ts`
 - Create: `apps/api/src/app.module.ts`
 - Create: `apps/api/src/app.controller.ts`
+- Create: `apps/api/src/config/env.validation.ts`
+- Test: `apps/api/src/config/env.validation.spec.ts`
 - Test: `apps/api/test/app.e2e-spec.ts`
 
 **Interfaces:**
-- Produces: a bootable Nest app on `PORT` (default 3000) with `GET /health` returning `{ "status": "ok" }` — later tasks add modules to `app.module.ts`'s `imports` array without touching this task's files.
+- Produces: a bootable Nest app on `PORT` (default 3000) with `GET /health` returning `{ "status": "ok" }`, and `validateEnv(env: NodeJS.ProcessEnv): void` (throws on missing `DATABASE_URL`/`JWT_SECRET`, or a `JWT_SECRET` shorter than 16 characters) — `main.ts` calls `validateEnv` before the app boots. Later tasks add modules to `app.module.ts`'s `imports` array without touching this task's files, and add required env vars to the same validation function.
 
 - [ ] **Step 1: Create `apps/api/package.json`**
 
@@ -568,7 +650,69 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 }
 ```
 
-- [ ] **Step 5: Write the failing e2e test for the health endpoint**
+- [ ] **Step 5: Write the failing unit test for `validateEnv`**
+
+```typescript
+// apps/api/src/config/env.validation.spec.ts
+import { validateEnv } from "./env.validation";
+
+describe("validateEnv", () => {
+  const validEnv = {
+    DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
+    JWT_SECRET: "a-secret-that-is-long-enough",
+  };
+
+  it("does not throw when all required vars are present and valid", () => {
+    expect(() => validateEnv(validEnv)).not.toThrow();
+  });
+
+  it("throws when DATABASE_URL is missing", () => {
+    const { DATABASE_URL, ...rest } = validEnv;
+    expect(() => validateEnv(rest)).toThrow(/DATABASE_URL/);
+  });
+
+  it("throws when JWT_SECRET is missing", () => {
+    const { JWT_SECRET, ...rest } = validEnv;
+    expect(() => validateEnv(rest)).toThrow(/JWT_SECRET/);
+  });
+
+  it("throws when JWT_SECRET is shorter than 16 characters", () => {
+    expect(() => validateEnv({ ...validEnv, JWT_SECRET: "short" })).toThrow(/JWT_SECRET/);
+  });
+});
+```
+
+- [ ] **Step 6: Run the test to verify it fails**
+
+Run: `npm install -w apps/api && npm run test -w apps/api -- env.validation`
+Expected: FAIL — `./env.validation` doesn't exist.
+
+- [ ] **Step 7: Implement `validateEnv`**
+
+```typescript
+// apps/api/src/config/env.validation.ts
+export function validateEnv(env: NodeJS.ProcessEnv): void {
+  const missing: string[] = [];
+
+  if (!env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!env.JWT_SECRET) missing.push("JWT_SECRET");
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variable(s): ${missing.join(", ")}`);
+  }
+
+  if (env.JWT_SECRET!.length < 16) {
+    throw new Error("JWT_SECRET must be at least 16 characters long");
+  }
+}
+```
+
+- [ ] **Step 8: Run the test to verify it passes**
+
+Run: `npm run test -w apps/api -- env.validation`
+Expected: PASS.
+
+- [ ] **Step 9: Write the failing e2e test for the health endpoint**
 
 ```typescript
 // apps/api/test/app.e2e-spec.ts
@@ -601,7 +745,7 @@ describe("AppController (e2e)", () => {
 });
 ```
 
-- [ ] **Step 6: Create `apps/api/test/jest-e2e.json`**
+- [ ] **Step 10: Create `apps/api/test/jest-e2e.json`**
 
 ```json
 {
@@ -613,12 +757,12 @@ describe("AppController (e2e)", () => {
 }
 ```
 
-- [ ] **Step 7: Run the test to verify it fails**
+- [ ] **Step 11: Run the e2e test to verify it fails**
 
-Run: `npm install -w apps/api && npm run test:e2e -w apps/api`
+Run: `npm run test:e2e -w apps/api`
 Expected: FAIL — cannot find module `../src/app.module` (doesn't exist yet).
 
-- [ ] **Step 8: Implement `app.controller.ts`, `app.module.ts`, `main.ts`**
+- [ ] **Step 12: Implement `app.controller.ts`, `app.module.ts`, `main.ts`**
 
 ```typescript
 // apps/api/src/app.controller.ts
@@ -660,109 +804,23 @@ async function bootstrap() {
 bootstrap();
 ```
 
-Note: `main.ts` references `./config/env.validation`, which is created in Task 7. For this task only, stub it minimally so the app boots:
+Note: the e2e test in Step 9 builds `AppModule` directly through Nest's testing module and never calls `main.ts`'s `bootstrap()`, so it does not require `DATABASE_URL`/`JWT_SECRET` to be set — `validateEnv` only runs on real process boot.
 
-```typescript
-// apps/api/src/config/env.validation.ts (stub — replaced by Task 7)
-export function validateEnv(_env: NodeJS.ProcessEnv): void {}
-```
-
-- [ ] **Step 9: Run the e2e test to verify it passes**
+- [ ] **Step 13: Run the e2e test to verify it passes**
 
 Run: `npm run test:e2e -w apps/api`
 Expected: PASS.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 14: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/nest-cli.json apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/src apps/api/test
-git commit -m "Scaffold NestJS API with health endpoint"
+git commit -m "Scaffold NestJS API with health endpoint and fail-fast env validation"
 ```
 
 ---
 
-### Task 7: `apps/api` — environment validation (fail-fast)
-
-**Files:**
-- Modify: `apps/api/src/config/env.validation.ts`
-- Test: `apps/api/src/config/env.validation.spec.ts`
-
-**Interfaces:**
-- Consumes: nothing new.
-- Produces: `validateEnv(env: NodeJS.ProcessEnv): void` — throws on missing/invalid vars; `main.ts` (Task 6) already calls this before app boot.
-
-- [ ] **Step 1: Write the failing unit test**
-
-```typescript
-// apps/api/src/config/env.validation.spec.ts
-import { validateEnv } from "./env.validation";
-
-describe("validateEnv", () => {
-  const validEnv = {
-    DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
-    JWT_SECRET: "a-secret-that-is-long-enough",
-  };
-
-  it("does not throw when all required vars are present and valid", () => {
-    expect(() => validateEnv(validEnv)).not.toThrow();
-  });
-
-  it("throws when DATABASE_URL is missing", () => {
-    const { DATABASE_URL, ...rest } = validEnv;
-    expect(() => validateEnv(rest)).toThrow(/DATABASE_URL/);
-  });
-
-  it("throws when JWT_SECRET is missing", () => {
-    const { JWT_SECRET, ...rest } = validEnv;
-    expect(() => validateEnv(rest)).toThrow(/JWT_SECRET/);
-  });
-
-  it("throws when JWT_SECRET is shorter than 16 characters", () => {
-    expect(() => validateEnv({ ...validEnv, JWT_SECRET: "short" })).toThrow(/JWT_SECRET/);
-  });
-});
-```
-
-- [ ] **Step 2: Run the test to verify it fails**
-
-Run: `npm run test -w apps/api -- env.validation`
-Expected: FAIL (current stub never throws).
-
-- [ ] **Step 3: Implement `validateEnv`**
-
-```typescript
-// apps/api/src/config/env.validation.ts
-export function validateEnv(env: NodeJS.ProcessEnv): void {
-  const missing: string[] = [];
-
-  if (!env.DATABASE_URL) missing.push("DATABASE_URL");
-  if (!env.JWT_SECRET) missing.push("JWT_SECRET");
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variable(s): ${missing.join(", ")}`);
-  }
-
-  if (env.JWT_SECRET!.length < 16) {
-    throw new Error("JWT_SECRET must be at least 16 characters long");
-  }
-}
-```
-
-- [ ] **Step 4: Run the test to verify it passes**
-
-Run: `npm run test -w apps/api -- env.validation`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add apps/api/src/config/env.validation.ts apps/api/src/config/env.validation.spec.ts
-git commit -m "Add fail-fast environment validation to API boot"
-```
-
----
-
-### Task 8: `apps/api` — Prisma schema (full data model) and initial migration
+### Task 7: `apps/api` — Prisma schema (full data model) and initial migration
 
 **Files:**
 - Create: `apps/api/prisma/schema.prisma`
@@ -771,7 +829,7 @@ git commit -m "Add fail-fast environment validation to API boot"
 - Modify: `apps/api/package.json` (add `prisma` + `@prisma/client` deps and `db:migrate`/`db:generate` scripts)
 
 **Interfaces:**
-- Produces: Prisma Client types (`Organization`, `Team`, `Champion`, `Principle`, `ChecklistItem`, `MaturityAssessment`, `PrincipleScore`, `ActionPlan`, `ActionItem`, `TrainingTrack`, `TrainingModule`, `ExecutiveReport`) and an injectable `PrismaService` — Task 9 (seed), Task 10 (auth), Task 11 (bootstrap) all inject `PrismaService`.
+- Produces: Prisma Client types (`Organization`, `Team`, `Champion`, `Principle`, `ChecklistItem`, `MaturityAssessment`, `PrincipleScore`, `ActionPlan`, `ActionItem`, `TrainingTrack`, `TrainingModule`, `ExecutiveReport`) and an injectable `PrismaService` — Task 8 (seed), Task 9 (auth), Task 10 (bootstrap) all inject `PrismaService`.
 
 This task has no unit test in the traditional sense — its "test" is the migration actually running against a real Postgres and Prisma Client generating without error.
 
@@ -1015,7 +1073,7 @@ git commit -m "Add full Prisma data model and initial migration"
 
 ---
 
-### Task 9: `apps/api` — seed script populating Principle/ChecklistItem from owasp-content
+### Task 8: `apps/api` — seed script populating Principle/ChecklistItem from owasp-content
 
 **Files:**
 - Create: `apps/api/prisma/seed.ts`
@@ -1023,7 +1081,7 @@ git commit -m "Add full Prisma data model and initial migration"
 - Test: `apps/api/prisma/seed.spec.ts`
 
 **Interfaces:**
-- Consumes: `loadPrinciples()`, `loadChecklistItems()` from `@sec-champs-trail/owasp-content` (Task 2); `PrismaService`/`PrismaClient` (Task 8).
+- Consumes: `loadPrinciples()`, `loadChecklistItems()` from `@sec-champs-trail/owasp-content` (Task 2, with real content from Tasks 3/4); `PrismaService`/`PrismaClient` (Task 7).
 - Produces: `seed(prisma: PrismaClient): Promise<void>` — idempotent upsert of `Principle` and `ChecklistItem` rows.
 
 - [ ] **Step 1: Add the workspace dependency**
@@ -1122,7 +1180,7 @@ git commit -m "Add seed script populating Principle/ChecklistItem from owasp-con
 
 ---
 
-### Task 10: `apps/api` — Auth module (bcrypt + JWT + login endpoint)
+### Task 9: `apps/api` — Auth module (bcrypt + JWT + login endpoint)
 
 **Files:**
 - Create: `apps/api/src/auth/auth.module.ts`
@@ -1136,8 +1194,8 @@ git commit -m "Add seed script populating Principle/ChecklistItem from owasp-con
 - Modify: `apps/api/src/app.module.ts` (import `AuthModule`)
 
 **Interfaces:**
-- Consumes: `PrismaService` (Task 8), `JWT_SECRET` env var (validated in Task 7).
-- Produces: `AuthService.validateCredentials(email, password): Promise<Champion | null>`, `AuthService.issueToken(champion): { accessToken: string }`; `POST /auth/login` returning `{ accessToken }` on valid credentials, `401` otherwise. Task 11 (bootstrap-admin) creates the `Champion` rows this logs in against.
+- Consumes: `PrismaService` (Task 7), `JWT_SECRET` env var (validated in Task 6).
+- Produces: `AuthService.validateCredentials(email, password): Promise<Champion | null>`, `AuthService.issueToken(champion): { accessToken: string }`; `POST /auth/login` returning `{ accessToken }` on valid credentials, `401` otherwise. Task 10 (bootstrap-admin) creates the `Champion` rows this logs in against.
 
 - [ ] **Step 1: Add auth dependencies**
 
@@ -1438,7 +1496,7 @@ git commit -m "Add JWT auth module with login endpoint"
 
 ---
 
-### Task 11: `apps/api` — bootstrap-admin script
+### Task 10: `apps/api` — bootstrap-admin script
 
 **Files:**
 - Create: `apps/api/src/bootstrap/bootstrap-admin.ts`
@@ -1446,7 +1504,7 @@ git commit -m "Add JWT auth module with login endpoint"
 - Modify: `apps/api/package.json` (add `bootstrap:admin` script)
 
 **Interfaces:**
-- Consumes: `PrismaClient` (Task 8), env vars `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ORGANIZATION_NAME`.
+- Consumes: `PrismaClient` (Task 7), env vars `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ORGANIZATION_NAME`.
 - Produces: `bootstrapAdmin(prisma: PrismaClient, env: NodeJS.ProcessEnv): Promise<void>` — creates the singleton `Organization` and first admin `Champion` exactly once; throws if an `Organization` already exists (enforces "one org per instance" from ADR 0001 Decision 3 without a public HTTP route).
 
 - [ ] **Step 1: Write the failing test**
@@ -1566,7 +1624,7 @@ git commit -m "Add bootstrap-admin script enforcing single Organization per inst
 
 ---
 
-### Task 12: `apps/web` — Vite + React + Tailwind scaffold with a minimal login page
+### Task 11: `apps/web` — Vite + React + Tailwind scaffold with a minimal login page
 
 **Files:**
 - Create: `apps/web/package.json`
@@ -1578,7 +1636,7 @@ git commit -m "Add bootstrap-admin script enforcing single Organization per inst
 - Test: `apps/web/src/pages/Login.test.tsx`
 
 **Interfaces:**
-- Consumes: `POST /auth/login` from Task 10 (via `fetch`, base URL from `VITE_API_URL` env var).
+- Consumes: `POST /auth/login` from Task 9 (via `fetch`, base URL from `VITE_API_URL` env var).
 - Produces: nothing consumed by later Fase 0 tasks — this is the leaf UI. Fase 1a builds more pages on top of `App.tsx`'s routing.
 
 - [ ] **Step 1: Create `apps/web/package.json`**
@@ -1816,7 +1874,7 @@ git commit -m "Scaffold React+Vite+Tailwind web app with minimal login page"
 
 ---
 
-### Task 13: Docker Compose wiring + `.env.example` finalization
+### Task 12: Docker Compose wiring + `.env.example` finalization
 
 **Files:**
 - Create: `apps/api/Dockerfile`
@@ -1824,7 +1882,7 @@ git commit -m "Scaffold React+Vite+Tailwind web app with minimal login page"
 - Modify: `docker-compose.yml`
 - Modify: `.env.example`
 
-**Interfaces:** none new — this wires together artifacts from Tasks 1–12 into `docker compose up`.
+**Interfaces:** none new — this wires together artifacts from Tasks 1–11 into `docker compose up`.
 
 - [ ] **Step 1: Create `apps/api/Dockerfile`**
 
@@ -1940,7 +1998,7 @@ git commit -m "Wire Docker Compose for postgres, api and web"
 
 ---
 
-### Task 14: CI — GitHub Actions (lint, typecheck, test)
+### Task 13: CI — GitHub Actions (lint, typecheck, test)
 
 **Files:**
 - Create: `.github/workflows/ci.yml`
@@ -2022,6 +2080,7 @@ Verify: open the PR/branch in GitHub Actions and confirm the `test` job goes gre
 
 ## Self-Review Notes
 
-- **Spec coverage:** every bullet in spec section 9 (acceptance criteria) maps to a task — Docker Compose (Task 13), seed with real content (Tasks 3/4/9), `ATTRIBUTION.md` (Task 5), bootstrap + JWT login (Tasks 10/11), CI (Task 14), full Prisma schema (Task 8), git already initialized (done, `f0c78b5`/`60b110f`).
+- **Spec coverage:** every bullet in spec section 9 (acceptance criteria) maps to a task — Docker Compose (Task 12), seed with real content (Tasks 3/4/8), `ATTRIBUTION.md` (Task 5), bootstrap + JWT login (Tasks 9/10), CI (Task 13), full Prisma schema (Task 7), git already initialized (done, `f0c78b5`/`60b110f`).
 - **Content curation caveat:** Tasks 3 and 4 depend on live-fetching `securitychampions.owasp.org` during execution rather than embedding pre-written OWASP text in this plan — per ADR 0001 Decision 1 and spec section 5, this transcription is explicitly human/agent curation work, not something to fabricate ahead of time. Whoever executes Task 3/4 must actually fetch the real pages; do not invent description text to satisfy the schema test faster.
-- **Type consistency check:** `Principle.id` / `ChecklistItem.principleId` (owasp-content, Task 2) are plain strings matching the Prisma `Principle.id` / `ChecklistItem.principleId` (Task 8) and are used identically in the seed script (Task 9). `ChecklistPhase` uses hyphenated values (`"development-retention"`) in `packages/owasp-content` but underscored enum values (`development_retention`) in Prisma — the seed script (Task 9, Step 4) explicitly translates between the two; this mismatch is intentional (JSON convention vs. Prisma enum naming convention) and documented inline rather than left implicit.
+- **Green-at-every-task-boundary fix:** Task 2 originally shipped with empty content directories and an intentionally failing test, deferring to Tasks 3/4. Restructured so Task 2 ships 2 fixture principles + 1 fixture checklist item and ends fully green; Tasks 3 and 4 delete the fixtures, add the real curated content, and each append their own additional test assertion (principle count, phase coverage) rather than relying on assertions written two tasks earlier. Task 6's `env.validation.ts` was originally a no-op stub replaced by a separate Task 7; folded into a single Task 6 so the module is real and tested from the moment it's created, eliminating the intermediate placeholder. This removed one task from the plan and shifted every task from the old Task 8 onward down by one number (final count: 13 tasks, was 14).
+- **Type consistency check:** `Principle.id` / `ChecklistItem.principleId` (owasp-content, Task 2) are plain strings matching the Prisma `Principle.id` / `ChecklistItem.principleId` (Task 7) and are used identically in the seed script (Task 8). `ChecklistPhase` uses hyphenated values (`"development-retention"`) in `packages/owasp-content` but underscored enum values (`development_retention`) in Prisma — the seed script (Task 8, Step 4) explicitly translates between the two; this mismatch is intentional (JSON convention vs. Prisma enum naming convention) and documented inline rather than left implicit.
