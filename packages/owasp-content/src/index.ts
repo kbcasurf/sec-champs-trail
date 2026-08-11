@@ -1,9 +1,12 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import type { ChecklistItem, Principle } from "./types";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
+// __dirname (not import.meta.url) so this file loads under both the
+// package's own ESM test runner (Vite/Vitest shims __dirname for ESM)
+// and CommonJS consumers like ts-jest in apps/api, where import.meta
+// is not valid syntax.
+const HERE = __dirname;
 const PRINCIPLES_DIR = join(HERE, "..", "principles");
 const CHECKLISTS_DIR = join(HERE, "..", "checklists");
 
