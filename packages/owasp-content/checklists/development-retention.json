@@ -1,0 +1,74 @@
+[
+  {
+    "id": "provide-security-training-and-gamified-learning",
+    "principleId": "promote-knowledge-sharing",
+    "phase": "development-retention",
+    "title": "Provide training and gamified learning opportunities",
+    "description": "Provide access to relevant security training materials and arrange workshops to enhance champions' understanding of security concepts, best practices, and emerging threats. Promote platforms that provide hands-on training and gamify learning through capture-the-flag events or leaderboards.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "share-security-landscape-and-industry-trends",
+    "principleId": "create-a-community",
+    "phase": "development-retention",
+    "title": "Share the current security landscape and industry trends",
+    "description": "Share information about the current security landscape, recent security incidents, and industry trends with champions, highlighting the importance of security awareness among technical staff in promoting a security-conscious culture.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "enable-collaborative-security-initiatives",
+    "principleId": "trust-your-champions",
+    "phase": "development-retention",
+    "title": "Introduce collaborative security initiatives",
+    "description": "Introduce ongoing security projects or initiatives champions can participate in, such as code reviews, threat modelling, or security testing, and encourage collaboration with other champions and relevant teams to address security challenges and share knowledge.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "establish-rewards-and-recognition",
+    "principleId": "reward-responsibility",
+    "phase": "development-retention",
+    "title": "Establish rewards and recognition for champions' contributions",
+    "description": "Outline a rewards and recognition system for security champions, such as certificates, badges, or public acknowledgments, and highlight the career development opportunities — like leadership roles or specialized security positions — that may arise from participating in the program.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "create-feedback-loop-for-program-improvement",
+    "principleId": "trust-your-champions",
+    "phase": "development-retention",
+    "title": "Create a feedback loop to improve the program",
+    "description": "Encourage security champions to provide feedback on the program's structure, content, and effectiveness, and create a feedback loop to address their suggestions and continuously improve the program.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "provide-ongoing-tooling-and-mentor-support",
+    "principleId": "invest-in-your-champions",
+    "phase": "development-retention",
+    "title": "Provide ongoing tooling and mentor support",
+    "description": "Provide champions access to security tools, frameworks, and libraries that can aid their security efforts, and offer support from the security team or designated mentors who can assist with technical questions or challenges.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "measure-and-communicate-program-impact",
+    "principleId": "reward-responsibility",
+    "phase": "development-retention",
+    "title": "Define and communicate metrics of the program's impact",
+    "description": "Define metrics to measure the impact of the Security Champions Program, such as vulnerabilities identified, security improvements implemented, or security incidents prevented, and regularly communicate the program's achievements to inspire and motivate champions.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "recruit-a-successor-before-champions-leave",
+    "principleId": "anticipate-personnel-changes",
+    "phase": "development-retention",
+    "title": "Have departing champions recruit a successor",
+    "description": "When a security champion leaves the program or company, ask them to recruit a successor to ensure continuity within their team, arrange an exit interview to gather their feedback on the program, and collect their success stories for future reference.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  }
+]

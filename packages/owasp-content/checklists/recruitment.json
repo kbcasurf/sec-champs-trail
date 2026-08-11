@@ -1,0 +1,74 @@
+[
+  {
+    "id": "highlight-security-culture-when-hiring",
+    "principleId": "be-passionate-about-security",
+    "phase": "recruitment",
+    "title": "Highlight your security culture when hiring",
+    "description": "Highlight your security culture and security champions program to attract the right people when hiring new employees.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "organize-open-recruitment-sessions",
+    "principleId": "be-passionate-about-security",
+    "phase": "recruitment",
+    "title": "Organize open sessions to expose employees to the program",
+    "description": "When recruiting champions internally, organize open sessions to get exposure for the security program. Sessions with a small reward, like lunch sessions and pizza evenings, can trigger people to show up and learn more about the program.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "review-candidate-security-background",
+    "principleId": "be-passionate-about-security",
+    "phase": "recruitment",
+    "title": "Review candidates' security background and growth interests",
+    "description": "When recruiting security champions internally, review their security background (if any) and discuss options for their development and growth in this area.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "ask-about-team-security-challenges",
+    "principleId": "be-passionate-about-security",
+    "phase": "recruitment",
+    "title": "Ask candidates about their team's security challenges",
+    "description": "Ask prospective champions about the challenges and opportunities they see in their team(s), preferably with real examples, as part of internal recruitment conversations.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "explain-program-purpose-during-onboarding",
+    "principleId": "start-with-a-clear-vision-for-your-program",
+    "phase": "recruitment",
+    "title": "Explain the program's purpose during onboarding",
+    "description": "During onboarding, explain the purpose and objectives of the Security Champions Program, highlight the importance of the champion's role as a security advocate and influencer, and emphasize how their participation will contribute to improving the organization's overall security posture.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "share-program-structure-and-success-stories",
+    "principleId": "start-with-a-clear-vision-for-your-program",
+    "phase": "recruitment",
+    "title": "Share program structure, expectations, and success stories",
+    "description": "During onboarding, provide an overview of the program structure including roles and responsibilities, explain the expected time commitment and duration of involvement, highlight the personal benefits of the program, and share success stories or case studies from previous champions.",
+    "sourceUrl": "https://securitychampions.owasp.org/assets/artifacts/Security%20Champions%20Guide%20-%20Be%20Passionate%20About%20Security%20-%20Checklist.pdf",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "secure-executive-sponsorship-before-recruiting",
+    "principleId": "secure-management-support",
+    "phase": "recruitment",
+    "title": "Secure executive sponsorship before recruiting champions",
+    "description": "Identify and secure buy-in from key stakeholders (the Head of IT, CISO/Security leadership, and HR) so the program is a formally approved, prioritized initiative before recruiting champions. This gives champions a mandate to spend time on security without having to justify it to IT Leads, Product Owners, or middle management.",
+    "sourceUrl": "https://securitychampions.owasp.org/principles/03_Secure_management_support/",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "id": "nominate-a-captain-before-recruiting-champions",
+    "principleId": "nominate-a-dedicated-captain",
+    "phase": "recruitment",
+    "title": "Nominate a dedicated Captain to lead recruitment",
+    "description": "Nominate or hire a dedicated Captain — someone passionate about the role with the right communication and organizational skills — before recruiting champions, so the program has a clear strategy, obtained management support, and a driving force behind recruitment; treating this as a side job undermines the momentum needed to launch successfully.",
+    "sourceUrl": "https://securitychampions.owasp.org/principles/04_Nominate_a_dedicated_captain/",
+    "license": "CC BY-SA 4.0"
+  }
+]

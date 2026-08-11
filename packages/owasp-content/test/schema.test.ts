@@ -40,4 +40,10 @@ describe("owasp-content loader mechanics", () => {
     expect(principles).toHaveLength(10);
     expect(principles.map((p) => p.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
+
+  it("has at least one checklist item per phase", () => {
+    const items = loadChecklistItems();
+    expect(items.some((i) => i.phase === "recruitment")).toBe(true);
+    expect(items.some((i) => i.phase === "development-retention")).toBe(true);
+  });
 });
