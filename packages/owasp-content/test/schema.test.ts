@@ -34,4 +34,10 @@ describe("owasp-content loader mechanics", () => {
       expect(item.license).toBe("CC BY-SA 4.0");
     }
   });
+
+  it("has exactly 10 curated principles, ordered 1-10", () => {
+    const principles = loadPrinciples();
+    expect(principles).toHaveLength(10);
+    expect(principles.map((p) => p.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
 });

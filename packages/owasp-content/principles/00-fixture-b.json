@@ -1,8 +1,0 @@
-{
-  "id": "fixture-principle-b",
-  "order": 2,
-  "title": "Fixture Principle B",
-  "description": "Placeholder principle used only to exercise the loader in Task 2. Replaced by real curated content in Task 3.",
-  "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
-  "license": "CC BY-SA 4.0"
-}
