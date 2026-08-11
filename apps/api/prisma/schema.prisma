@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ChampionRole {
+  admin
+  champion
+}
+
+enum ChecklistPhase {
+  recruitment
+  development_retention
+}
+
+enum ActionItemStatus {
+  pending
+  in_progress
+  done
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  teams            Team[]
+  actionPlans      ActionPlan[]
+  executiveReports ExecutiveReport[]
+}
+
+model Team {
+  id             String   @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+
+  champions          Champion[]
+  maturityAssessments MaturityAssessment[]
+  trainingTracks      TrainingTrack[]
+}
+
+model Champion {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  role         ChampionRole @default(champion)
+  teamId       String?
+  team         Team?        @relation(fields: [teamId], references: [id])
+  createdAt    DateTime     @default(now())
+}
+
+model Principle {
+  id          String   @id
+  order       Int      @unique
+  title       String
+  description String
+  sourceUrl   String
+  license     String
+
+  checklistItems  ChecklistItem[]
+  principleScores PrincipleScore[]
+}
+
+model ChecklistItem {
+  id          String         @id
+  principleId String
+  principle   Principle      @relation(fields: [principleId], references: [id])
+  phase       ChecklistPhase
+  title       String
+  description String
+  sourceUrl   String
+  license     String
+
+  actionItems ActionItem[]
+}
+
+model MaturityAssessment {
+  id        String   @id @default(uuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+
+  principleScores PrincipleScore[]
+}
+
+model PrincipleScore {
+  id           String             @id @default(uuid())
+  assessmentId String
+  assessment   MaturityAssessment @relation(fields: [assessmentId], references: [id])
+  principleId  String
+  principle    Principle          @relation(fields: [principleId], references: [id])
+  score        Int
+
+  @@unique([assessmentId, principleId])
+}
+
+model ActionPlan {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  actionItems ActionItem[]
+}
+
+model ActionItem {
+  id              String            @id @default(uuid())
+  actionPlanId    String
+  actionPlan      ActionPlan        @relation(fields: [actionPlanId], references: [id])
+  checklistItemId String
+  checklistItem   ChecklistItem     @relation(fields: [checklistItemId], references: [id])
+  status          ActionItemStatus  @default(pending)
+}
+
+model TrainingTrack {
+  id        String   @id @default(uuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+
+  modules TrainingModule[]
+}
+
+model TrainingModule {
+  id              String        @id @default(uuid())
+  trainingTrackId String
+  trainingTrack   TrainingTrack @relation(fields: [trainingTrackId], references: [id])
+  order           Int
+  title           String
+  content         String
+}
+
+model ExecutiveReport {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  content        String
+}
