@@ -1,0 +1,11 @@
+[
+  {
+    "id": "fixture-checklist-item",
+    "principleId": "fixture-principle-a",
+    "phase": "recruitment",
+    "title": "Fixture checklist item",
+    "description": "Placeholder checklist item used only to exercise the loader in Task 2. Replaced by real curated content in Task 4.",
+    "sourceUrl": "https://securitychampions.owasp.org/manifesto/",
+    "license": "CC BY-SA 4.0"
+  }
+]
