@@ -43,6 +43,8 @@ model Team {
   champions          Champion[]
   maturityAssessments MaturityAssessment[]
   trainingTracks      TrainingTrack[]
+
+  @@index([organizationId])
 }
 
 model Champion {
@@ -53,6 +55,8 @@ model Champion {
   teamId       String?
   team         Team?        @relation(fields: [teamId], references: [id])
   createdAt    DateTime     @default(now())
+
+  @@index([teamId])
 }
 
 model Principle {
@@ -78,6 +82,8 @@ model ChecklistItem {
   license     String
 
   actionItems ActionItem[]
+
+  @@index([principleId])
 }
 
 model MaturityAssessment {
@@ -87,6 +93,8 @@ model MaturityAssessment {
   createdAt DateTime @default(now())
 
   principleScores PrincipleScore[]
+
+  @@index([teamId])
 }
 
 model PrincipleScore {
@@ -107,6 +115,8 @@ model ActionPlan {
   createdAt      DateTime     @default(now())
 
   actionItems ActionItem[]
+
+  @@index([organizationId])
 }
 
 model ActionItem {
@@ -116,6 +126,9 @@ model ActionItem {
   checklistItemId String
   checklistItem   ChecklistItem     @relation(fields: [checklistItemId], references: [id])
   status          ActionItemStatus  @default(pending)
+
+  @@index([actionPlanId])
+  @@index([checklistItemId])
 }
 
 model TrainingTrack {
@@ -125,6 +138,8 @@ model TrainingTrack {
   createdAt DateTime @default(now())
 
   modules TrainingModule[]
+
+  @@index([teamId])
 }
 
 model TrainingModule {
@@ -134,6 +149,8 @@ model TrainingModule {
   order           Int
   title           String
   content         String
+
+  @@index([trainingTrackId])
 }
 
 model ExecutiveReport {
@@ -142,4 +159,6 @@ model ExecutiveReport {
   organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime     @default(now())
   content        String
+
+  @@index([organizationId])
 }
