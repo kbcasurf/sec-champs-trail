@@ -1,5 +1,13 @@
 # Fase 0 (Fundação) Implementation Plan
 
+> **Status: Executado.** Todas as 13 tarefas foram implementadas via
+> subagent-driven-development, revisadas individualmente (com rounds de fix
+> onde necessário) e passaram por uma revisão final de branch inteira antes
+> do merge em `main` (2026-08-12). Os checkboxes abaixo foram marcados
+> retroativamente para refletir esse estado. Para o histórico completo de
+> execução (achados de revisão, rounds de fix, decisões) ver
+> `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stand up the ChampionForge monorepo foundation — tooling, curated OWASP content, full Prisma data model, JWT auth, Docker Compose — with no product UI/endpoints yet, so Fase 1a can build directly on top of it.
@@ -89,7 +97,7 @@ sec-champs-trail/
 **Interfaces:**
 - Produces: npm workspaces `apps/*` and `packages/*`, so every later task can run `npm install` once at the root and `npm run <script> -w <workspace-name>` per package.
 
-- [ ] **Step 1: Create the root `package.json`**
+- [x] **Step 1: Create the root `package.json`**
 
 ```json
 {
@@ -106,13 +114,13 @@ sec-champs-trail/
 }
 ```
 
-- [ ] **Step 2: Create `.nvmrc`**
+- [x] **Step 2: Create `.nvmrc`**
 
 ```
 20
 ```
 
-- [ ] **Step 3: Create `.gitignore`**
+- [x] **Step 3: Create `.gitignore`**
 
 ```
 node_modules/
@@ -125,7 +133,7 @@ coverage/
 apps/web/vite.config.ts.timestamp-*
 ```
 
-- [ ] **Step 4: Create `.env.example`** (placeholder skeleton — real keys are added incrementally in later tasks as each part of the stack needs them; start with the two every workspace will need)
+- [x] **Step 4: Create `.env.example`** (placeholder skeleton — real keys are added incrementally in later tasks as each part of the stack needs them; start with the two every workspace will need)
 
 ```
 # Postgres (apps/api)
@@ -135,12 +143,12 @@ DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge
 JWT_SECRET=change-me-in-production
 ```
 
-- [ ] **Step 5: Verify workspaces resolve**
+- [x] **Step 5: Verify workspaces resolve**
 
 Run: `mkdir -p apps/api apps/web packages/owasp-content && npm install`
 Expected: `npm install` completes without error (no workspace has a `package.json` yet, so npm just creates `node_modules/` and `package-lock.json` for the root). If npm errors because a workspace folder has no `package.json`, remove the empty dirs — Task 2/6/11 will recreate them with real content.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json .nvmrc .gitignore .env.example
@@ -165,7 +173,7 @@ git commit -m "Scaffold npm workspaces monorepo"
 - Produces: `Principle` type (`id`, `order`, `title`, `description`, `sourceUrl`, `license`), `ChecklistItem` type (`id`, `principleId`, `phase: "recruitment" | "development-retention"`, `title`, `description`, `sourceUrl`, `license`), and `loadPrinciples(): Principle[]` / `loadChecklistItems(): ChecklistItem[]` — these two functions are what `apps/api`'s seed script (Task 8) imports. This task ships with 2 fixture principles and 1 fixture checklist item so the deliverable is fully green on its own; Task 3 deletes the fixture principles and replaces them with the 10 real curated ones, Task 4 deletes the fixture checklist item and replaces it with the real recruitment/development-retention content.
 - Consumes: nothing (leaf package).
 
-- [ ] **Step 1: Create `packages/owasp-content/package.json`**
+- [x] **Step 1: Create `packages/owasp-content/package.json`**
 
 ```json
 {
@@ -186,7 +194,7 @@ git commit -m "Scaffold npm workspaces monorepo"
 }
 ```
 
-- [ ] **Step 2: Create `packages/owasp-content/tsconfig.json`**
+- [x] **Step 2: Create `packages/owasp-content/tsconfig.json`**
 
 ```json
 {
@@ -204,7 +212,7 @@ git commit -m "Scaffold npm workspaces monorepo"
 }
 ```
 
-- [ ] **Step 3: Create `packages/owasp-content/src/types.ts`**
+- [x] **Step 3: Create `packages/owasp-content/src/types.ts`**
 
 ```typescript
 export type ChecklistPhase = "recruitment" | "development-retention";
@@ -229,7 +237,7 @@ export interface ChecklistItem {
 }
 ```
 
-- [ ] **Step 4: Write the failing test for the loader mechanics (fixture-scoped, not content-scoped)**
+- [x] **Step 4: Write the failing test for the loader mechanics (fixture-scoped, not content-scoped)**
 
 ```typescript
 // packages/owasp-content/test/schema.test.ts
@@ -272,12 +280,12 @@ describe("owasp-content loader mechanics", () => {
 });
 ```
 
-- [ ] **Step 5: Run the test to verify it fails**
+- [x] **Step 5: Run the test to verify it fails**
 
 Run: `npm install -w packages/owasp-content && npx vitest run --root packages/owasp-content`
 Expected: FAIL — `../src/index` has no exported member `loadPrinciples` (module doesn't exist yet).
 
-- [ ] **Step 6: Implement the loader**
+- [x] **Step 6: Implement the loader**
 
 ```typescript
 // packages/owasp-content/src/index.ts
@@ -310,7 +318,7 @@ export function loadChecklistItems(): ChecklistItem[] {
 export type { ChecklistItem, ChecklistPhase, Principle } from "./types";
 ```
 
-- [ ] **Step 7: Add fixture content so the loader has real files to read**
+- [x] **Step 7: Add fixture content so the loader has real files to read**
 
 ```json
 // packages/owasp-content/principles/00-fixture-a.json
@@ -351,12 +359,12 @@ export type { ChecklistItem, ChecklistPhase, Principle } from "./types";
 ]
 ```
 
-- [ ] **Step 8: Run the test to verify it passes**
+- [x] **Step 8: Run the test to verify it passes**
 
 Run: `npx vitest run --root packages/owasp-content`
 Expected: PASS (both tests, against fixture data).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/owasp-content
@@ -379,11 +387,11 @@ git commit -m "Add owasp-content package: types, loader, schema test harness (fi
 
 This is manual curation, not code generation — ADR 0001 Decision 1 and spec section 5 are explicit that transcription must be done by a human/agent reading the real page, not fabricated. Do not invent description text.
 
-- [ ] **Step 1: Fetch the real manifesto index and record the exact link for each of the 10 principles**
+- [x] **Step 1: Fetch the real manifesto index and record the exact link for each of the 10 principles**
 
 Run WebFetch on `https://securitychampions.owasp.org/manifesto/` asking for every hyperlink on the page as `[text](href)` pairs. The 10 principle titles are confirmed to be (in this order): "Be passionate about security", "Start with a clear vision for your program", "Secure management support", "Nominate a dedicated captain", "Trust your champions", "Create a community", "Promote knowledge sharing", "Reward responsibility", "Invest in your champions", "Anticipate personnel changes". Use the fetch to get their **real** URLs — do not guess URL paths (earlier attempts at guessed paths like `/manifesto/1-be-passionate-about-security/` returned 404).
 
-- [ ] **Step 2: Fetch each of the 10 linked pages and transcribe verbatim**
+- [x] **Step 2: Fetch each of the 10 linked pages and transcribe verbatim**
 
 For each principle, WebFetch its real URL from Step 1 asking for the full title and description text verbatim (not summarized/paraphrased). Write one JSON file per principle:
 
@@ -400,7 +408,7 @@ For each principle, WebFetch its real URL from Step 1 asking for the full title 
 
 Repeat for all 10, with `id` as a stable kebab-case slug of the title and `order` 1 through 10 matching the manifesto's own ordering. File names: `01-be-passionate-about-security.json` through `10-anticipate-personnel-changes.json` (zero-padded order prefix keeps directory listing sorted, though `loadPrinciples()` sorts by the `order` field regardless of filename).
 
-- [ ] **Step 3: Remove the fixture principles and repoint the fixture checklist item**
+- [x] **Step 3: Remove the fixture principles and repoint the fixture checklist item**
 
 ```bash
 rm packages/owasp-content/principles/00-fixture-a.json packages/owasp-content/principles/00-fixture-b.json
@@ -422,7 +430,7 @@ rm packages/owasp-content/principles/00-fixture-a.json packages/owasp-content/pr
 ]
 ```
 
-- [ ] **Step 4: Add the content-completeness assertion to the schema test**
+- [x] **Step 4: Add the content-completeness assertion to the schema test**
 
 ```typescript
 // packages/owasp-content/test/schema.test.ts — add this additional test
@@ -433,12 +441,12 @@ it("has exactly 10 curated principles, ordered 1-10", () => {
 });
 ```
 
-- [ ] **Step 5: Run the full schema test suite**
+- [x] **Step 5: Run the full schema test suite**
 
 Run: `npx vitest run --root packages/owasp-content`
 Expected: PASS (all three tests — the two loader-mechanics tests from Task 2 still pass against real+fixture data, plus the new count assertion).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/owasp-content/principles packages/owasp-content/checklists/00-fixture.json packages/owasp-content/test/schema.test.ts
@@ -459,11 +467,11 @@ git commit -m "Curate OWASP Security Champions Manifesto (10 principles)"
 - Consumes: `ChecklistItem` type from Task 2; the 10 `principleId` slugs curated in Task 3 (each item must reference one of them).
 - Produces: the two real files this task's added test assertion checks, consumed by Task 8's seed script.
 
-- [ ] **Step 1: Look for a structured checklist on the live site**
+- [x] **Step 1: Look for a structured checklist on the live site**
 
 WebFetch `https://securitychampions.owasp.org/` asking for the full site navigation with real hrefs (not guessed), specifically any "Guide", "Artifacts", or phase-based (attraction/recruitment vs. development/retention) pages. Follow any such link found and check whether it contains a literal checklist (numbered/bulleted actionable items), transcribing exact text if so.
 
-- [ ] **Step 2: If no dedicated checklist page exists, derive items from each principle's own actionable guidance**
+- [x] **Step 2: If no dedicated checklist page exists, derive items from each principle's own actionable guidance**
 
 If Step 1 turns up no standalone checklist page (this was the case in earlier exploration of this site), fall back to: re-read each of the 10 principle pages already fetched in Task 3, and for every concrete action/recommendation the text makes (e.g. "get executive sponsorship", "set measurable goals", "run regular knowledge-sharing sessions"), write one `ChecklistItem` referencing that principle's `id`, classified into whichever phase it fits:
   - `recruitment`: actions about attracting/selecting/onboarding champions (e.g. principles 2, 3, 4 tend to map here).
@@ -485,13 +493,13 @@ Each item's `sourceUrl` in this fallback is the principle page it was derived fr
 
 Produce a reasonable number of items per phase (aim for at least 3-5 per phase to be useful for Fase 1a's checklist library) across `recruitment.json` and `development-retention.json`, each file being a JSON array of `ChecklistItem` objects.
 
-- [ ] **Step 3: Remove the fixture checklist file**
+- [x] **Step 3: Remove the fixture checklist file**
 
 ```bash
 rm packages/owasp-content/checklists/00-fixture.json
 ```
 
-- [ ] **Step 4: Add the phase-coverage assertion to the schema test**
+- [x] **Step 4: Add the phase-coverage assertion to the schema test**
 
 ```typescript
 // packages/owasp-content/test/schema.test.ts — add this additional test
@@ -502,12 +510,12 @@ it("has at least one checklist item per phase", () => {
 });
 ```
 
-- [ ] **Step 5: Run the full schema test suite**
+- [x] **Step 5: Run the full schema test suite**
 
 Run: `npx vitest run --root packages/owasp-content`
 Expected: PASS (all four tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/owasp-content/checklists packages/owasp-content/test/schema.test.ts
@@ -523,7 +531,7 @@ git commit -m "Curate OWASP checklists for recruitment and development-retention
 
 **Interfaces:** none (standalone doc).
 
-- [ ] **Step 1: Write the attribution file**
+- [x] **Step 1: Write the attribution file**
 
 ```markdown
 # Attribution
@@ -548,7 +556,7 @@ shown to end users, to keep it distinguishable from the original OWASP text.
 This project's own code is licensed separately — see `LICENSE`.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add ATTRIBUTION.md
@@ -573,7 +581,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 **Interfaces:**
 - Produces: a bootable Nest app on `PORT` (default 3000) with `GET /health` returning `{ "status": "ok" }`, and `validateEnv(env: NodeJS.ProcessEnv): void` (throws on missing `DATABASE_URL`/`JWT_SECRET`, or a `JWT_SECRET` shorter than 16 characters) — `main.ts` calls `validateEnv` before the app boots. Later tasks add modules to `app.module.ts`'s `imports` array without touching this task's files, and add required env vars to the same validation function.
 
-- [ ] **Step 1: Create `apps/api/package.json`**
+- [x] **Step 1: Create `apps/api/package.json`**
 
 ```json
 {
@@ -611,7 +619,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 }
 ```
 
-- [ ] **Step 2: Create `apps/api/nest-cli.json`**
+- [x] **Step 2: Create `apps/api/nest-cli.json`**
 
 ```json
 {
@@ -621,7 +629,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 }
 ```
 
-- [ ] **Step 3: Create `apps/api/tsconfig.json`**
+- [x] **Step 3: Create `apps/api/tsconfig.json`**
 
 ```json
 {
@@ -641,7 +649,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 }
 ```
 
-- [ ] **Step 4: Create `apps/api/tsconfig.build.json`**
+- [x] **Step 4: Create `apps/api/tsconfig.build.json`**
 
 ```json
 {
@@ -650,7 +658,7 @@ git commit -m "Add ATTRIBUTION.md for OWASP Security Champions Guide content"
 }
 ```
 
-- [ ] **Step 5: Write the failing unit test for `validateEnv`**
+- [x] **Step 5: Write the failing unit test for `validateEnv`**
 
 ```typescript
 // apps/api/src/config/env.validation.spec.ts
@@ -682,12 +690,12 @@ describe("validateEnv", () => {
 });
 ```
 
-- [ ] **Step 6: Run the test to verify it fails**
+- [x] **Step 6: Run the test to verify it fails**
 
 Run: `npm install -w apps/api && npm run test -w apps/api -- env.validation`
 Expected: FAIL — `./env.validation` doesn't exist.
 
-- [ ] **Step 7: Implement `validateEnv`**
+- [x] **Step 7: Implement `validateEnv`**
 
 ```typescript
 // apps/api/src/config/env.validation.ts
@@ -707,12 +715,12 @@ export function validateEnv(env: NodeJS.ProcessEnv): void {
 }
 ```
 
-- [ ] **Step 8: Run the test to verify it passes**
+- [x] **Step 8: Run the test to verify it passes**
 
 Run: `npm run test -w apps/api -- env.validation`
 Expected: PASS.
 
-- [ ] **Step 9: Write the failing e2e test for the health endpoint**
+- [x] **Step 9: Write the failing e2e test for the health endpoint**
 
 ```typescript
 // apps/api/test/app.e2e-spec.ts
@@ -745,7 +753,7 @@ describe("AppController (e2e)", () => {
 });
 ```
 
-- [ ] **Step 10: Create `apps/api/test/jest-e2e.json`**
+- [x] **Step 10: Create `apps/api/test/jest-e2e.json`**
 
 ```json
 {
@@ -757,12 +765,12 @@ describe("AppController (e2e)", () => {
 }
 ```
 
-- [ ] **Step 11: Run the e2e test to verify it fails**
+- [x] **Step 11: Run the e2e test to verify it fails**
 
 Run: `npm run test:e2e -w apps/api`
 Expected: FAIL — cannot find module `../src/app.module` (doesn't exist yet).
 
-- [ ] **Step 12: Implement `app.controller.ts`, `app.module.ts`, `main.ts`**
+- [x] **Step 12: Implement `app.controller.ts`, `app.module.ts`, `main.ts`**
 
 ```typescript
 // apps/api/src/app.controller.ts
@@ -806,12 +814,12 @@ bootstrap();
 
 Note: the e2e test in Step 9 builds `AppModule` directly through Nest's testing module and never calls `main.ts`'s `bootstrap()`, so it does not require `DATABASE_URL`/`JWT_SECRET` to be set — `validateEnv` only runs on real process boot.
 
-- [ ] **Step 13: Run the e2e test to verify it passes**
+- [x] **Step 13: Run the e2e test to verify it passes**
 
 Run: `npm run test:e2e -w apps/api`
 Expected: PASS.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/nest-cli.json apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/src apps/api/test
@@ -833,7 +841,7 @@ git commit -m "Scaffold NestJS API with health endpoint and fail-fast env valida
 
 This task has no unit test in the traditional sense — its "test" is the migration actually running against a real Postgres and Prisma Client generating without error.
 
-- [ ] **Step 1: Add Prisma dependencies**
+- [x] **Step 1: Add Prisma dependencies**
 
 ```json
 // apps/api/package.json — add to "dependencies"
@@ -855,7 +863,7 @@ Also add `"ts-node": "^10.9.0"` to devDependencies (needed by `db:seed`), and th
 }
 ```
 
-- [ ] **Step 2: Write `apps/api/prisma/schema.prisma`**
+- [x] **Step 2: Write `apps/api/prisma/schema.prisma`**
 
 ```prisma
 generator client {
@@ -1005,7 +1013,7 @@ model ExecutiveReport {
 }
 ```
 
-- [ ] **Step 3: Implement `PrismaService` and `PrismaModule`**
+- [x] **Step 3: Implement `PrismaService` and `PrismaModule`**
 
 ```typescript
 // apps/api/src/prisma/prisma.service.ts
@@ -1037,7 +1045,7 @@ import { PrismaService } from "./prisma.service";
 export class PrismaModule {}
 ```
 
-- [ ] **Step 4: Register `PrismaModule` in `app.module.ts`**
+- [x] **Step 4: Register `PrismaModule` in `app.module.ts`**
 
 ```typescript
 // apps/api/src/app.module.ts
@@ -1052,19 +1060,19 @@ import { PrismaModule } from "./prisma/prisma.module";
 export class AppModule {}
 ```
 
-- [ ] **Step 5: Start Postgres locally and run the migration**
+- [x] **Step 5: Start Postgres locally and run the migration**
 
 Run: `docker run -d --name championforge-db -e POSTGRES_USER=champion -e POSTGRES_PASSWORD=champion -e POSTGRES_DB=championforge -p 5432:5432 postgres:16-alpine`
 Run: `npm install -w apps/api`
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run db:migrate -w apps/api -- --name init`
 Expected: migration succeeds, creates all tables listed in Step 2, `apps/api/prisma/migrations/<timestamp>_init/` is generated.
 
-- [ ] **Step 6: Verify Prisma Client generates and the e2e test from Task 6 still passes**
+- [x] **Step 6: Verify Prisma Client generates and the e2e test from Task 6 still passes**
 
 Run: `npm run db:generate -w apps/api && DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run test:e2e -w apps/api`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/prisma apps/api/src/prisma apps/api/src/app.module.ts
@@ -1084,7 +1092,7 @@ git commit -m "Add full Prisma data model and initial migration"
 - Consumes: `loadPrinciples()`, `loadChecklistItems()` from `@sec-champs-trail/owasp-content` (Task 2, with real content from Tasks 3/4); `PrismaService`/`PrismaClient` (Task 7).
 - Produces: `seed(prisma: PrismaClient): Promise<void>` — idempotent upsert of `Principle` and `ChecklistItem` rows.
 
-- [ ] **Step 1: Add the workspace dependency**
+- [x] **Step 1: Add the workspace dependency**
 
 ```json
 // apps/api/package.json — add to "dependencies"
@@ -1093,7 +1101,7 @@ git commit -m "Add full Prisma data model and initial migration"
 
 Run: `npm install`
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```typescript
 // apps/api/prisma/seed.spec.ts
@@ -1123,12 +1131,12 @@ describe("seed", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run test -w apps/api -- seed`
 Expected: FAIL — `./seed` has no exported member `seed`.
 
-- [ ] **Step 4: Implement the seed script**
+- [x] **Step 4: Implement the seed script**
 
 ```typescript
 // apps/api/prisma/seed.ts
@@ -1166,12 +1174,12 @@ if (require.main === module) {
 }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run test -w apps/api -- seed`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/prisma/seed.ts apps/api/prisma/seed.spec.ts
@@ -1197,7 +1205,7 @@ git commit -m "Add seed script populating Principle/ChecklistItem from owasp-con
 - Consumes: `PrismaService` (Task 7), `JWT_SECRET` env var (validated in Task 6).
 - Produces: `AuthService.validateCredentials(email, password): Promise<Champion | null>`, `AuthService.issueToken(champion): { accessToken: string }`; `POST /auth/login` returning `{ accessToken }` on valid credentials, `401` otherwise. Task 10 (bootstrap-admin) creates the `Champion` rows this logs in against.
 
-- [ ] **Step 1: Add auth dependencies**
+- [x] **Step 1: Add auth dependencies**
 
 ```json
 // apps/api/package.json — add to "dependencies"
@@ -1213,7 +1221,7 @@ git commit -m "Add seed script populating Principle/ChecklistItem from owasp-con
 
 Run: `npm install`
 
-- [ ] **Step 2: Write the failing unit test for `AuthService`**
+- [x] **Step 2: Write the failing unit test for `AuthService`**
 
 ```typescript
 // apps/api/src/auth/auth.service.spec.ts
@@ -1269,12 +1277,12 @@ describe("AuthService", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `npm run test -w apps/api -- auth.service`
 Expected: FAIL — `./auth.service` doesn't exist.
 
-- [ ] **Step 4: Implement `AuthService`**
+- [x] **Step 4: Implement `AuthService`**
 
 ```typescript
 // apps/api/src/auth/auth.service.ts
@@ -1310,12 +1318,12 @@ export class AuthService {
 }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `npm run test -w apps/api -- auth.service`
 Expected: PASS.
 
-- [ ] **Step 6: Implement `jwt.strategy.ts`, `dto/login.dto.ts`, `auth.controller.ts`, `auth.module.ts`**
+- [x] **Step 6: Implement `jwt.strategy.ts`, `dto/login.dto.ts`, `auth.controller.ts`, `auth.module.ts`**
 
 ```typescript
 // apps/api/src/auth/jwt.strategy.ts
@@ -1411,7 +1419,7 @@ import { ValidationPipe } from "@nestjs/common";
 app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 ```
 
-- [ ] **Step 7: Register `AuthModule` in `app.module.ts`**
+- [x] **Step 7: Register `AuthModule` in `app.module.ts`**
 
 ```typescript
 // apps/api/src/app.module.ts
@@ -1427,7 +1435,7 @@ import { AuthModule } from "./auth/auth.module";
 export class AppModule {}
 ```
 
-- [ ] **Step 8: Write the e2e test for the login endpoint**
+- [x] **Step 8: Write the e2e test for the login endpoint**
 
 ```typescript
 // apps/api/test/auth.e2e-spec.ts
@@ -1482,12 +1490,12 @@ describe("Auth (e2e)", () => {
 });
 ```
 
-- [ ] **Step 9: Run the e2e test**
+- [x] **Step 9: Run the e2e test**
 
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge JWT_SECRET=test-secret-at-least-16-chars npm run test:e2e -w apps/api`
 Expected: PASS.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/src/auth apps/api/src/app.module.ts apps/api/src/main.ts apps/api/test/auth.e2e-spec.ts
@@ -1507,7 +1515,7 @@ git commit -m "Add JWT auth module with login endpoint"
 - Consumes: `PrismaClient` (Task 7), env vars `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ORGANIZATION_NAME`.
 - Produces: `bootstrapAdmin(prisma: PrismaClient, env: NodeJS.ProcessEnv): Promise<void>` — creates the singleton `Organization` and first admin `Champion` exactly once; throws if an `Organization` already exists (enforces "one org per instance" from ADR 0001 Decision 3 without a public HTTP route).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // apps/api/src/bootstrap/bootstrap-admin.spec.ts
@@ -1550,12 +1558,12 @@ describe("bootstrapAdmin", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run test -w apps/api -- bootstrap-admin`
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement `bootstrapAdmin`**
+- [x] **Step 3: Implement `bootstrapAdmin`**
 
 ```typescript
 // apps/api/src/bootstrap/bootstrap-admin.ts
@@ -1603,19 +1611,19 @@ if (require.main === module) {
 }
 ```
 
-- [ ] **Step 4: Add the npm script**
+- [x] **Step 4: Add the npm script**
 
 ```json
 // apps/api/package.json — add to "scripts"
 "bootstrap:admin": "ts-node src/bootstrap/bootstrap-admin.ts"
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `DATABASE_URL=postgresql://champion:champion@localhost:5432/championforge npm run test -w apps/api -- bootstrap-admin`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/src/bootstrap
@@ -1639,7 +1647,7 @@ git commit -m "Add bootstrap-admin script enforcing single Organization per inst
 - Consumes: `POST /auth/login` from Task 9 (via `fetch`, base URL from `VITE_API_URL` env var).
 - Produces: nothing consumed by later Fase 0 tasks — this is the leaf UI. Fase 1a builds more pages on top of `App.tsx`'s routing.
 
-- [ ] **Step 1: Create `apps/web/package.json`**
+- [x] **Step 1: Create `apps/web/package.json`**
 
 ```json
 {
@@ -1675,7 +1683,7 @@ git commit -m "Add bootstrap-admin script enforcing single Organization per inst
 }
 ```
 
-- [ ] **Step 2: Create `apps/web/vite.config.ts`**
+- [x] **Step 2: Create `apps/web/vite.config.ts`**
 
 ```typescript
 import { defineConfig } from "vite";
@@ -1696,7 +1704,7 @@ export default defineConfig({
 import "@testing-library/jest-dom";
 ```
 
-- [ ] **Step 3: Create Tailwind config files**
+- [x] **Step 3: Create Tailwind config files**
 
 ```javascript
 // apps/web/tailwind.config.js
@@ -1722,7 +1730,7 @@ export default {
 @tailwind utilities;
 ```
 
-- [ ] **Step 4: Create `apps/web/index.html` and `src/main.tsx`**
+- [x] **Step 4: Create `apps/web/index.html` and `src/main.tsx`**
 
 ```html
 <!-- apps/web/index.html -->
@@ -1753,7 +1761,7 @@ createRoot(document.getElementById("root")!).render(
 );
 ```
 
-- [ ] **Step 5: Write the failing test for the login page**
+- [x] **Step 5: Write the failing test for the login page**
 
 ```tsx
 // apps/web/src/pages/Login.test.tsx
@@ -1800,12 +1808,12 @@ describe("Login page", () => {
 });
 ```
 
-- [ ] **Step 6: Run the test to verify it fails**
+- [x] **Step 6: Run the test to verify it fails**
 
 Run: `npm install -w apps/web && npm run test -w apps/web -- Login`
 Expected: FAIL — `./Login` doesn't exist.
 
-- [ ] **Step 7: Implement `Login.tsx`**
+- [x] **Step 7: Implement `Login.tsx`**
 
 ```tsx
 // apps/web/src/pages/Login.tsx
@@ -1860,12 +1868,12 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 8: Run the test to verify it passes**
+- [x] **Step 8: Run the test to verify it passes**
 
 Run: `npm run test -w apps/web -- Login`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add apps/web
@@ -1884,7 +1892,7 @@ git commit -m "Scaffold React+Vite+Tailwind web app with minimal login page"
 
 **Interfaces:** none new — this wires together artifacts from Tasks 1–11 into `docker compose up`.
 
-- [ ] **Step 1: Create `apps/api/Dockerfile`**
+- [x] **Step 1: Create `apps/api/Dockerfile`**
 
 ```dockerfile
 FROM node:20-alpine
@@ -1900,7 +1908,7 @@ RUN npm run db:generate
 CMD ["sh", "-c", "npm run db:migrate:deploy && npm run start"]
 ```
 
-- [ ] **Step 2: Create `apps/web/Dockerfile`**
+- [x] **Step 2: Create `apps/web/Dockerfile`**
 
 ```dockerfile
 FROM node:20-alpine
@@ -1913,7 +1921,7 @@ WORKDIR /app/apps/web
 CMD ["npm", "run", "dev", "--", "--host"]
 ```
 
-- [ ] **Step 3: Write `docker-compose.yml`**
+- [x] **Step 3: Write `docker-compose.yml`**
 
 ```yaml
 services:
@@ -1962,7 +1970,7 @@ volumes:
   championforge-db:
 ```
 
-- [ ] **Step 4: Update `.env.example` with the full variable set**
+- [x] **Step 4: Update `.env.example` with the full variable set**
 
 ```
 # Postgres (apps/api)
@@ -1980,7 +1988,7 @@ ORGANIZATION_NAME=My Organization
 VITE_API_URL=http://localhost:3000
 ```
 
-- [ ] **Step 5: Bring the full stack up and verify**
+- [x] **Step 5: Bring the full stack up and verify**
 
 Run: `docker compose up --build -d`
 Run: `curl -sf http://localhost:3000/health`
@@ -1989,7 +1997,7 @@ Run: `curl -sf http://localhost:5173/`
 Expected: HTML response (Vite dev server serving `index.html`).
 Run: `docker compose down`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/Dockerfile apps/web/Dockerfile docker-compose.yml .env.example
@@ -2005,7 +2013,7 @@ git commit -m "Wire Docker Compose for postgres, api and web"
 
 **Interfaces:** none.
 
-- [ ] **Step 1: Write the workflow**
+- [x] **Step 1: Write the workflow**
 
 ```yaml
 name: CI
@@ -2047,7 +2055,7 @@ jobs:
       - run: npm run test
 ```
 
-- [ ] **Step 2: Verify locally that every script the workflow calls exists**
+- [x] **Step 2: Verify locally that every script the workflow calls exists**
 
 Run: `npm run lint --workspaces --if-present && npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present`
 Expected: all succeed (or print nothing for workspaces without that script, since `--if-present` is used at the root and each workspace defines its own `lint`/`typecheck`/`test` from earlier tasks).
@@ -2067,7 +2075,7 @@ Note: `apps/api` and `apps/web`'s `package.json` don't yet have an `eslint` conf
 
 Add `"eslint": "^8.57.0"`, `"@typescript-eslint/parser": "^7.0.0"`, `"@typescript-eslint/eslint-plugin": "^7.0.0"` to each workspace's `devDependencies`.
 
-- [ ] **Step 3: Commit and push to trigger CI**
+- [x] **Step 3: Commit and push to trigger CI**
 
 ```bash
 git add .github/workflows/ci.yml apps/api/.eslintrc.json apps/web/.eslintrc.json apps/api/package.json apps/web/package.json

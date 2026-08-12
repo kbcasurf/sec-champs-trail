@@ -1,8 +1,11 @@
 # Fase 0 — Fundação (ChampionForge / Security Champions Assistant)
 
-Status: Aprovado
+Status: Implementado — mesclado em `main` em 2026-08-12
 Data: 2026-08-10
 PRD de origem: `PRD-security-champions-assistant.md`
+Plano de implementação executado: `docs/superpowers/plans/2026-08-10-fase0-fundacao.md`
+Log de execução: `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`
+Roadmap geral do projeto: `ROADMAP.md`
 
 ## 1. Contexto
 
@@ -163,16 +166,21 @@ definido uma vez, populado incrementalmente por fase.
 
 ## 9. Critérios de aceite da Fase 0
 
-- [ ] `docker compose up` sobe Postgres + API + Web localmente sem erros.
-- [ ] Seed popula `Principle` (10 registros) e `ChecklistItem` a partir de
+Todos os critérios abaixo foram verificados de ponta a ponta (incluindo `docker compose up`
+real, com seed e contagens de linhas conferidas) antes do merge — ver
+`docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md` para o detalhamento da
+verificação de cada um.
+
+- [x] `docker compose up` sobe Postgres + API + Web localmente sem erros.
+- [x] Seed popula `Principle` (10 registros) e `ChecklistItem` a partir de
       `packages/owasp-content`, com conteúdo real transcrito do guia oficial da OWASP
       (não placeholder).
-- [ ] `ATTRIBUTION.md` presente, citando OWASP Security Champions Guide e CC BY-SA 4.0.
-- [ ] É possível fazer bootstrap do primeiro admin e fazer login via JWT (via API; UI
+- [x] `ATTRIBUTION.md` presente, citando OWASP Security Champions Guide e CC BY-SA 4.0.
+- [x] É possível fazer bootstrap do primeiro admin e fazer login via JWT (via API; UI
       de login pode ser mínima).
-- [ ] CI roda lint + typecheck + test em PR e passa.
-- [ ] Prisma schema contempla todas as entidades da seção 6 (mesmo as sem endpoint).
-- [ ] Repositório git inicializado com histórico de commits legível.
+- [x] CI roda lint + typecheck + test em PR e passa.
+- [x] Prisma schema contempla todas as entidades da seção 6 (mesmo as sem endpoint).
+- [x] Repositório git inicializado com histórico de commits legível.
 
 ## 10. Fora de escopo (explícito)
 

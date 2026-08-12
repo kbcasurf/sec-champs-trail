@@ -149,6 +149,11 @@ Organization
 
 ## 7. Roadmap Sugerido
 
+> **Nota (2026-08-12):** esta tabela é a proposta original. O roadmap **atual e
+> mantido** — com status por fase, decisões que ajustaram este escopo (ver
+> `docs/adr/0001-fase0-fundacao.md`) e a decomposição revisada Fase 0/1a/1b/2/3 — vive em
+> `ROADMAP.md` na raiz do repositório.
+
 | Fase | Entregas | Estimativa |
 |---|---|---|
 | Fase 0 | Setup do repo, ingestão/estruturação do conteúdo OWASP (manifesto + checklists em JSON/Markdown), ATTRIBUTION.md | 1-2 semanas |

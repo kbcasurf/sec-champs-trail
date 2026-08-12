@@ -1,5 +1,20 @@
 # ChampionForge
 
+Ferramenta open-source para ajudar organizações a construir, operar e amadurecer
+programas de Security Champions, usando o **OWASP Security Champions Guide** (Manifesto
+de 10 princípios + checklists oficiais) como espinha dorsal. Ver
+`PRD-security-champions-assistant.md` para o produto completo e `ROADMAP.md` para o
+status atual de cada fase.
+
+## Status
+
+**Fase 0 (Fundação): implementada.** O repositório roda localmente via Docker Compose
+com o schema de dados completo, conteúdo OWASP curado e verificado contra o site oficial,
+autenticação JWT e CI configurados. Nenhuma tela ou fluxo de produto (avaliação,
+checklist interativo, trilhas, relatórios) existe ainda — isso é o escopo da Fase 1a, o
+próximo item do roadmap. Detalhes: `ROADMAP.md` e
+`docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`.
+
 ## Quickstart
 
 1. Copy the environment template and fill in the required secrets:
