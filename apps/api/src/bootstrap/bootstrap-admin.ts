@@ -10,20 +10,25 @@ export async function bootstrapAdmin(
     throw new Error("An Organization already exists for this instance — bootstrap can only run once");
   }
 
-  if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD || !env.ORGANIZATION_NAME) {
+  const { ADMIN_EMAIL: adminEmail, ADMIN_PASSWORD: adminPassword, ORGANIZATION_NAME: organizationName } = env;
+  if (!adminEmail || !adminPassword || !organizationName) {
     throw new Error("ADMIN_EMAIL, ADMIN_PASSWORD and ORGANIZATION_NAME are required to bootstrap");
   }
 
-  await prisma.organization.create({
-    data: { name: env.ORGANIZATION_NAME },
-  });
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
 
-  await prisma.champion.create({
-    data: {
-      email: env.ADMIN_EMAIL,
-      passwordHash: await bcrypt.hash(env.ADMIN_PASSWORD, 10),
-      role: "admin",
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.organization.create({
+      data: { name: organizationName },
+    });
+
+    await tx.champion.create({
+      data: {
+        email: adminEmail,
+        passwordHash,
+        role: "admin",
+      },
+    });
   });
 }
 
