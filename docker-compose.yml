@@ -19,9 +19,10 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    env_file: .env
     environment:
       DATABASE_URL: postgresql://champion:champion@postgres:5432/championforge
-      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
     ports:
       - "3000:3000"
