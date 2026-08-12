@@ -11,11 +11,13 @@ describe("validateEnv", () => {
   });
 
   it("throws when DATABASE_URL is missing", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { DATABASE_URL, ...rest } = validEnv;
     expect(() => validateEnv(rest)).toThrow(/DATABASE_URL/);
   });
 
   it("throws when JWT_SECRET is missing", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { JWT_SECRET, ...rest } = validEnv;
     expect(() => validateEnv(rest)).toThrow(/JWT_SECRET/);
   });

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: champion
+          POSTGRES_PASSWORD: champion
+          POSTGRES_DB: championforge
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U champion"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://champion:champion@localhost:5432/championforge
+      JWT_SECRET: ci-only-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm install
+      - run: npm run db:migrate:deploy -w apps/api
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
