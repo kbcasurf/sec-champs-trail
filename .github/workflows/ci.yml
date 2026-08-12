@@ -31,7 +31,9 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm install
+      - run: npm run db:generate -w apps/api
       - run: npm run db:migrate:deploy -w apps/api
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
+      - run: npm run test:e2e -w apps/api

@@ -9,4 +9,4 @@ COPY packages/owasp-content packages/owasp-content
 COPY apps/api apps/api
 WORKDIR /app/apps/api
 RUN npm run db:generate
-CMD ["sh", "-c", "npm run db:migrate:deploy && npm run start"]
+CMD ["sh", "-c", "npm run db:migrate:deploy && npm run db:seed && npm run start"]
