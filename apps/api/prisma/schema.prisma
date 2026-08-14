@@ -23,26 +23,33 @@ enum ActionItemStatus {
   done
 }
 
+enum ActionBucket {
+  three_months
+  six_months
+  twelve_months
+}
+
 model Organization {
   id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
 
   teams            Team[]
-  actionPlans      ActionPlan[]
   executiveReports ExecutiveReport[]
 }
 
 model Team {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
-  champions          Champion[]
+  champions           Champion[]
   maturityAssessments MaturityAssessment[]
   trainingTracks      TrainingTrack[]
+  actionPlans         ActionPlan[]
+  checklistProgress   ChecklistProgress[]
 
   @@index([organizationId])
 }
@@ -69,6 +76,18 @@ model Principle {
 
   checklistItems  ChecklistItem[]
   principleScores PrincipleScore[]
+  maturityLevels  PrincipleMaturityLevel[]
+}
+
+model PrincipleMaturityLevel {
+  id          String    @id @default(uuid())
+  principleId String
+  principle   Principle @relation(fields: [principleId], references: [id])
+  level       Int
+  description String
+
+  @@unique([principleId, level])
+  @@index([principleId])
 }
 
 model ChecklistItem {
@@ -81,7 +100,8 @@ model ChecklistItem {
   sourceUrl   String
   license     String
 
-  actionItems ActionItem[]
+  actionItems       ActionItem[]
+  checklistProgress ChecklistProgress[]
 
   @@index([principleId])
 }
@@ -93,6 +113,7 @@ model MaturityAssessment {
   createdAt DateTime @default(now())
 
   principleScores PrincipleScore[]
+  actionPlans     ActionPlan[]
 
   @@index([teamId])
 }
@@ -106,28 +127,47 @@ model PrincipleScore {
   score        Int
 
   @@unique([assessmentId, principleId])
+  @@index([principleId])
 }
 
 model ActionPlan {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now())
+  id           String             @id @default(uuid())
+  teamId       String
+  team         Team               @relation(fields: [teamId], references: [id])
+  assessmentId String
+  assessment   MaturityAssessment @relation(fields: [assessmentId], references: [id])
+  createdAt    DateTime           @default(now())
 
   actionItems ActionItem[]
 
-  @@index([organizationId])
+  @@index([teamId])
+  @@index([assessmentId])
 }
 
 model ActionItem {
-  id              String            @id @default(uuid())
+  id              String        @id @default(uuid())
   actionPlanId    String
-  actionPlan      ActionPlan        @relation(fields: [actionPlanId], references: [id])
+  actionPlan      ActionPlan    @relation(fields: [actionPlanId], references: [id])
   checklistItemId String
-  checklistItem   ChecklistItem     @relation(fields: [checklistItemId], references: [id])
-  status          ActionItemStatus  @default(pending)
+  checklistItem   ChecklistItem @relation(fields: [checklistItemId], references: [id])
+  bucket          ActionBucket
 
+  @@unique([actionPlanId, checklistItemId])
   @@index([actionPlanId])
+  @@index([checklistItemId])
+}
+
+model ChecklistProgress {
+  id              String           @id @default(uuid())
+  teamId          String
+  team            Team             @relation(fields: [teamId], references: [id])
+  checklistItemId String
+  checklistItem   ChecklistItem    @relation(fields: [checklistItemId], references: [id])
+  status          ActionItemStatus @default(pending)
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([teamId, checklistItemId])
+  @@index([teamId])
   @@index([checklistItemId])
 }
 
