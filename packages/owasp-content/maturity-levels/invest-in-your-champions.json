@@ -1,0 +1,7 @@
+[
+  { "principleId": "invest-in-your-champions", "level": 0, "description": "No time, budget, or resources are allocated for champions' personal growth in security." },
+  { "principleId": "invest-in-your-champions", "level": 1, "description": "Champions are expected to grow their skills on their own time, with no organizational investment." },
+  { "principleId": "invest-in-your-champions", "level": 2, "description": "Some training budget or time is occasionally made available to champions." },
+  { "principleId": "invest-in-your-champions", "level": 3, "description": "The organization consistently invests dedicated time and budget in champions' training, certifications, and growth opportunities." },
+  { "principleId": "invest-in-your-champions", "level": 4, "description": "Structured, ongoing investment (dedicated learning time, budget, career paths) ensures champions continuously grow, and this investment is protected even under organizational pressure." }
+]

@@ -1,0 +1,7 @@
+[
+  { "principleId": "start-with-a-clear-vision-for-your-program", "level": 0, "description": "The program has no stated purpose or goals; champions don't know what it is meant to achieve." },
+  { "principleId": "start-with-a-clear-vision-for-your-program", "level": 1, "description": "An informal, unwritten idea of the program's purpose exists but hasn't been communicated or agreed upon." },
+  { "principleId": "start-with-a-clear-vision-for-your-program", "level": 2, "description": "A basic vision statement exists and has been shared with champions, but it isn't tied to concrete goals or reviewed regularly." },
+  { "principleId": "start-with-a-clear-vision-for-your-program", "level": 3, "description": "A documented vision with clear goals guides program decisions and is periodically revisited with input from champions." },
+  { "principleId": "start-with-a-clear-vision-for-your-program", "level": 4, "description": "The vision is well-documented, actively used to prioritize program activities, communicated across the organization, and evolves based on regular feedback from champions and leadership." }
+]

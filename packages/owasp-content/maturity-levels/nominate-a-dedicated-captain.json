@@ -1,0 +1,7 @@
+[
+  { "principleId": "nominate-a-dedicated-captain", "level": 0, "description": "No one is responsible for leading the program; champion activities happen ad hoc, if at all." },
+  { "principleId": "nominate-a-dedicated-captain", "level": 1, "description": "Someone informally coordinates champion activities alongside other unrelated responsibilities, without a defined mandate." },
+  { "principleId": "nominate-a-dedicated-captain", "level": 2, "description": "A captain has been named with a basic mandate, but lacks dedicated time or a clear roadmap." },
+  { "principleId": "nominate-a-dedicated-captain", "level": 3, "description": "A dedicated captain leads the program with a documented strategy and roadmap, and is recognized as the program's owner." },
+  { "principleId": "nominate-a-dedicated-captain", "level": 4, "description": "The captain role is a well-resourced, recognized position with a clear roadmap, succession planning, and organizational authority to drive the program forward continuously." }
+]

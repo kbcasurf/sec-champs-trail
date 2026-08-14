@@ -1,0 +1,7 @@
+[
+  { "principleId": "promote-knowledge-sharing", "level": 0, "description": "Champions receive no dedicated security education and have no expectation to share what they learn." },
+  { "principleId": "promote-knowledge-sharing", "level": 1, "description": "Champions occasionally seek out learning on their own initiative, without organizational support or a sharing mechanism." },
+  { "principleId": "promote-knowledge-sharing", "level": 2, "description": "The organization provides some training resources and encourages champions to share learnings informally." },
+  { "principleId": "promote-knowledge-sharing", "level": 3, "description": "The organization regularly invests in champion education and has established channels (talks, write-ups, sessions) for sharing knowledge inside and outside their teams." },
+  { "principleId": "promote-knowledge-sharing", "level": 4, "description": "Continuous investment in education is paired with systematic internal and external knowledge-sharing (talks, publications, mentoring), making champions recognized security educators." }
+]

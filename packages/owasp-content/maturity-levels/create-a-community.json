@@ -1,0 +1,7 @@
+[
+  { "principleId": "create-a-community", "level": 0, "description": "Champions work in isolation with no shared space to exchange knowledge or experiences." },
+  { "principleId": "create-a-community", "level": 1, "description": "Informal, occasional conversations happen between champions, but there's no dedicated community structure." },
+  { "principleId": "create-a-community", "level": 2, "description": "A basic community channel or recurring meeting exists, though participation is inconsistent." },
+  { "principleId": "create-a-community", "level": 3, "description": "An active community (regular meetings, chat channel, or forum) supports knowledge sharing, recognition, and mutual support among champions." },
+  { "principleId": "create-a-community", "level": 4, "description": "A thriving, well-facilitated community drives continuous collaboration, peer recognition, and cross-team learning, and is seen as a core pillar of the program." }
+]

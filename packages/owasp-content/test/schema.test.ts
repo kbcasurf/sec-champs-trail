@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadPrinciples, loadChecklistItems } from "../src/index";
+import { loadPrinciples, loadChecklistItems, loadMaturityLevels } from "../src/index";
 import type { ChecklistPhase } from "../src/types";
 
 const VALID_PHASES: ChecklistPhase[] = ["recruitment", "development-retention"];
@@ -45,5 +45,25 @@ describe("owasp-content loader mechanics", () => {
     const items = loadChecklistItems();
     expect(items.some((i) => i.phase === "recruitment")).toBe(true);
     expect(items.some((i) => i.phase === "development-retention")).toBe(true);
+  });
+
+  it("has exactly 5 maturity levels (0-4) for every one of the 10 principles, with no license field", () => {
+    const principles = loadPrinciples();
+    const levels = loadMaturityLevels();
+
+    expect(levels).toHaveLength(50);
+    expect((levels[0] as unknown as { license?: string }).license).toBeUndefined();
+
+    for (const principle of principles) {
+      const levelsForPrinciple = levels
+        .filter((l) => l.principleId === principle.id)
+        .map((l) => l.level)
+        .sort((a, b) => a - b);
+      expect(levelsForPrinciple).toEqual([0, 1, 2, 3, 4]);
+    }
+
+    for (const level of levels) {
+      expect(level.description.length).toBeGreaterThan(0);
+    }
   });
 });

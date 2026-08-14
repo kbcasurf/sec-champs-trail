@@ -1,0 +1,7 @@
+[
+  { "principleId": "reward-responsibility", "level": 0, "description": "Champion contributions go unnoticed; there is no form of recognition or reward." },
+  { "principleId": "reward-responsibility", "level": 1, "description": "Recognition happens occasionally and informally (e.g., a verbal thank-you), with no consistent system." },
+  { "principleId": "reward-responsibility", "level": 2, "description": "A basic recognition mechanism exists (e.g., shout-outs, small perks) but isn't applied consistently across champions." },
+  { "principleId": "reward-responsibility", "level": 3, "description": "A structured system consistently recognizes and rewards champion contributions, combining tangible and intangible recognition." },
+  { "principleId": "reward-responsibility", "level": 4, "description": "A well-established, fair recognition and reward system is embedded into career development and performance processes, visibly valued across the organization." }
+]

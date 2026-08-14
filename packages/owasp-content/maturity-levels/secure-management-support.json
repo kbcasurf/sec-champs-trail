@@ -1,0 +1,7 @@
+[
+  { "principleId": "secure-management-support", "level": 0, "description": "Management is unaware of the program or does not acknowledge it as a formal initiative." },
+  { "principleId": "secure-management-support", "level": 1, "description": "Management tolerates the program informally but provides no budget, time allocation, or public backing." },
+  { "principleId": "secure-management-support", "level": 2, "description": "Management has formally acknowledged the program's existence and purpose, though support is inconsistent." },
+  { "principleId": "secure-management-support", "level": 3, "description": "Management actively sponsors the program with allocated budget and time, and communicates its importance to the organization." },
+  { "principleId": "secure-management-support", "level": 4, "description": "The program has strong, visible executive sponsorship, dedicated budget, and is treated as a strategic priority referenced in leadership communications." }
+]

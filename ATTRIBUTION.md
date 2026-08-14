@@ -18,3 +18,11 @@ of this material and is labeled as "AI-generated/adapted" wherever it is
 shown to end users, to keep it distinguishable from the original OWASP text.
 
 This project's own code is licensed separately — see `LICENSE`.
+
+## Maturity scale (not from OWASP)
+
+The 0-4 maturity-level descriptions in `packages/owasp-content/maturity-levels/`
+are **authored by this project**, not transcribed or derived from the OWASP
+Security Champions Guide — the guide does not define a numeric maturity scale
+per principle. This content carries no `license` field and is not covered by
+the CC BY-SA 4.0 attribution above.

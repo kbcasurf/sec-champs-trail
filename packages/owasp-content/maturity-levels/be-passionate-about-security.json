@@ -1,0 +1,7 @@
+[
+  { "principleId": "be-passionate-about-security", "level": 0, "description": "No one in the organization is specifically recruited or recognized for security passion; champions, if they exist, were assigned without regard to genuine interest." },
+  { "principleId": "be-passionate-about-security", "level": 1, "description": "A few individuals show personal interest in security, but there is no deliberate effort to recruit or nurture that passion." },
+  { "principleId": "be-passionate-about-security", "level": 2, "description": "The organization actively looks for passionate volunteers when staffing the champions program, rather than assigning people by default." },
+  { "principleId": "be-passionate-about-security", "level": 3, "description": "Passionate champions are consistently recruited, given visible opportunities to grow, and job postings highlight the organization's security culture." },
+  { "principleId": "be-passionate-about-security", "level": 4, "description": "Passion for security is part of the company's DNA at every level, actively cultivated through recruitment, visible management sponsorship, and continuous opportunities for champions to grow their curiosity." }
+]

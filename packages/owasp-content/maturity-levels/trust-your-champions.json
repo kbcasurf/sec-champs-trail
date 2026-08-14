@@ -1,0 +1,7 @@
+[
+  { "principleId": "trust-your-champions", "level": 0, "description": "Champions have no autonomy; all security decisions in their teams are made exclusively by a central security team." },
+  { "principleId": "trust-your-champions", "level": 1, "description": "Champions are occasionally consulted but rarely given real decision-making authority over their team's security practices." },
+  { "principleId": "trust-your-champions", "level": 2, "description": "Champions are trusted to make day-to-day security decisions within their teams, with light oversight." },
+  { "principleId": "trust-your-champions", "level": 3, "description": "Champions are consistently trusted as the go-to security experts for their teams, with the central security team acting as a support function." },
+  { "principleId": "trust-your-champions", "level": 4, "description": "Champions are fully empowered as embedded security experts, trusted to represent and act on their team's security needs, with the organization systematically acting on their input." }
+]

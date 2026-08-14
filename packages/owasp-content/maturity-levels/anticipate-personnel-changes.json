@@ -1,0 +1,7 @@
+[
+  { "principleId": "anticipate-personnel-changes", "level": 0, "description": "Champion turnover catches the program off guard every time, with no plan to fill gaps or transfer knowledge." },
+  { "principleId": "anticipate-personnel-changes", "level": 1, "description": "Turnover is acknowledged as a risk, but there's no process to prepare for it." },
+  { "principleId": "anticipate-personnel-changes", "level": 2, "description": "Basic documentation exists so a new champion can pick up where the previous one left off, though onboarding is ad hoc." },
+  { "principleId": "anticipate-personnel-changes", "level": 3, "description": "The program has a defined process for onboarding new champions and transferring knowledge when someone leaves or changes roles." },
+  { "principleId": "anticipate-personnel-changes", "level": 4, "description": "The program proactively plans for turnover with succession pipelines, cross-training, and documented knowledge transfer, so departures have minimal impact on program continuity." }
+]

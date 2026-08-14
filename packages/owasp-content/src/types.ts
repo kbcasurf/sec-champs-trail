@@ -18,3 +18,9 @@ export interface ChecklistItem {
   sourceUrl: string;
   license: "CC BY-SA 4.0";
 }
+
+export interface MaturityLevelDescription {
+  principleId: string; // references principles[].id
+  level: 0 | 1 | 2 | 3 | 4;
+  description: string;
+}
