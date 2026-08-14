@@ -6,6 +6,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   role: "admin" | "champion";
+  teamId: string | null;
 }
 
 @Injectable()
