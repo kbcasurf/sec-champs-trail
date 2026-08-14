@@ -19,11 +19,12 @@ export class AuthService {
     return passwordMatches ? champion : null;
   }
 
-  issueToken(champion: Pick<Champion, "id" | "email" | "role">): { accessToken: string } {
+  issueToken(champion: Pick<Champion, "id" | "email" | "role" | "teamId">): { accessToken: string } {
     const accessToken = this.jwtService.sign({
       sub: champion.id,
       email: champion.email,
       role: champion.role,
+      teamId: champion.teamId,
     });
     return { accessToken };
   }

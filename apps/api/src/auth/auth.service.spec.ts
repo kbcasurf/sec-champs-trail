@@ -40,11 +40,12 @@ describe("AuthService", () => {
     expect(result).toBeNull();
   });
 
-  it("issues a JWT containing the champion's id, email and role", () => {
+  it("issues a JWT containing the champion's id, email, role and teamId", () => {
     const { accessToken } = service.issueToken(champion);
     const decoded = jwt.decode(accessToken) as Record<string, unknown>;
     expect(decoded.sub).toBe("champ-1");
     expect(decoded.email).toBe("captain@example.com");
     expect(decoded.role).toBe("admin");
+    expect(decoded.teamId).toBeNull();
   });
 });

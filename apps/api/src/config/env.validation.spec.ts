@@ -4,6 +4,7 @@ describe("validateEnv", () => {
   const validEnv = {
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
     JWT_SECRET: "a-secret-that-is-long-enough",
+    WEB_ORIGIN: "http://localhost:5173",
   };
 
   it("does not throw when all required vars are present and valid", () => {
@@ -24,5 +25,11 @@ describe("validateEnv", () => {
 
   it("throws when JWT_SECRET is shorter than 16 characters", () => {
     expect(() => validateEnv({ ...validEnv, JWT_SECRET: "short" })).toThrow(/JWT_SECRET/);
+  });
+
+  it("throws when WEB_ORIGIN is missing", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { WEB_ORIGIN, ...rest } = validEnv;
+    expect(() => validateEnv(rest)).toThrow(/WEB_ORIGIN/);
   });
 });
