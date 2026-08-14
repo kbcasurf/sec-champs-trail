@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateChampionDto } from "./dto/create-champion.dto";
@@ -17,9 +18,16 @@ export class ChampionsService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    return this.prisma.champion.create({
-      data: { email: dto.email, passwordHash, role: dto.role, teamId: dto.teamId ?? null },
-      select: { id: true, email: true, role: true, teamId: true },
-    });
+    try {
+      return await this.prisma.champion.create({
+        data: { email: dto.email, passwordHash, role: dto.role, teamId: dto.teamId ?? null },
+        select: { id: true, email: true, role: true, teamId: true },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        throw new ConflictException("A champion with this email already exists");
+      }
+      throw err;
+    }
   }
 }

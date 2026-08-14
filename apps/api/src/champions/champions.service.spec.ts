@@ -1,4 +1,5 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ConflictException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { ChampionsService } from "./champions.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -37,5 +38,16 @@ describe("ChampionsService", () => {
 
     const result = await service.create({ email: "b@example.com", password: "correct-horse", role: "champion", teamId: "team-1" });
     expect(result.teamId).toBe("team-1");
+  });
+
+  it("throws ConflictException when email already exists", async () => {
+    const conflictError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "5.22.0",
+    });
+    (prisma.champion.create as jest.Mock).mockRejectedValue(conflictError);
+    await expect(
+      service.create({ email: "existing@example.com", password: "correct-horse", role: "admin" }),
+    ).rejects.toThrow(ConflictException);
   });
 });

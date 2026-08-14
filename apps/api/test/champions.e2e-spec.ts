@@ -24,13 +24,17 @@ describe("Champions (e2e)", () => {
       create: { email: "champions-admin@example.com", passwordHash: await bcrypt.hash("correct-horse", 10), role: "admin" },
       update: {},
     });
-    const organization = await prisma.organization.findFirstOrThrow();
+    const organization = await prisma.organization.upsert({
+      where: { id: "org-default" },
+      create: { id: "org-default", name: "Default Organization" },
+      update: {},
+    });
     const team = await prisma.team.create({ data: { name: "Champions E2E Team", organizationId: organization.id } });
     teamId = team.id;
   });
 
   afterAll(async () => {
-    await prisma.champion.deleteMany({ where: { email: { in: ["champions-admin@example.com", "new-champion@example.com"] } } });
+    await prisma.champion.deleteMany({ where: { email: { in: ["champions-admin@example.com", "new-champion@example.com", "duplicate@example.com"] } } });
     await prisma.team.delete({ where: { id: teamId } });
     await app.close();
   });
@@ -56,5 +60,17 @@ describe("Champions (e2e)", () => {
       .post("/champions")
       .send({ email: "no-team@example.com", password: "correct-horse", role: "champion" })
       .expect(400);
+  });
+
+  it("rejects duplicate email with 409", async () => {
+    const admin = await loginAsAdmin();
+    await admin
+      .post("/champions")
+      .send({ email: "duplicate@example.com", password: "correct-horse", role: "admin" })
+      .expect(201);
+    await admin
+      .post("/champions")
+      .send({ email: "duplicate@example.com", password: "different-password", role: "admin" })
+      .expect(409);
   });
 });
