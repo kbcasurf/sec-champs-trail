@@ -18,6 +18,12 @@ describe("seed", () => {
     const checklistCount = await prisma.checklistItem.count();
     expect(checklistCount).toBeGreaterThan(0);
 
+    const maturityLevelCount = await prisma.principleMaturityLevel.count();
+    expect(maturityLevelCount).toBe(50);
+
+    const anyLevel = await prisma.principleMaturityLevel.findFirst();
+    expect(anyLevel?.description.length).toBeGreaterThan(0);
+
     const anyPrinciple = await prisma.principle.findFirst({ orderBy: { order: "asc" } });
     expect(anyPrinciple?.license).toBe("CC BY-SA 4.0");
   });

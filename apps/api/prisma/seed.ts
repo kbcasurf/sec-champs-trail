@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { loadPrinciples, loadChecklistItems } from "@sec-champs-trail/owasp-content";
+import { loadPrinciples, loadChecklistItems, loadMaturityLevels } from "@sec-champs-trail/owasp-content";
 
 export async function seed(prisma: PrismaClient): Promise<void> {
   for (const principle of loadPrinciples()) {
@@ -16,6 +16,14 @@ export async function seed(prisma: PrismaClient): Promise<void> {
       where: { id: item.id },
       create: { ...item, phase },
       update: { ...item, phase },
+    });
+  }
+
+  for (const level of loadMaturityLevels()) {
+    await prisma.principleMaturityLevel.upsert({
+      where: { principleId_level: { principleId: level.principleId, level: level.level } },
+      create: level,
+      update: level,
     });
   }
 }
