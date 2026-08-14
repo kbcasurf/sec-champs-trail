@@ -6,9 +6,18 @@ import { TeamsModule } from "./teams/teams.module";
 import { ChampionsModule } from "./champions/champions.module";
 import { PrinciplesModule } from "./principles/principles.module";
 import { ChecklistItemsModule } from "./checklist-items/checklist-items.module";
+import { AssessmentsModule } from "./assessments/assessments.module";
 
 @Module({
-  imports: [PrismaModule, AuthModule, TeamsModule, ChampionsModule, PrinciplesModule, ChecklistItemsModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    TeamsModule,
+    ChampionsModule,
+    PrinciplesModule,
+    ChecklistItemsModule,
+    AssessmentsModule,
+  ],
   controllers: [AppController],
 })
 export class AppModule {}
