@@ -8,7 +8,7 @@ export class TeamScopeGuard implements CanActivate {
       .switchToHttp()
       .getRequest<{ user?: JwtPayload; params: Record<string, string> }>();
 
-    if (!user || (user.role !== "admin" && user.teamId !== params.teamId)) {
+    if (!user || !params.teamId || (user.role !== "admin" && user.teamId !== params.teamId)) {
       throw new ForbiddenException("Cannot access another team's data");
     }
     return true;

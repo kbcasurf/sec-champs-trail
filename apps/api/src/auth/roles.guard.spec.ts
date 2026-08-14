@@ -29,4 +29,10 @@ describe("RolesGuard", () => {
     const guard = new RolesGuard(reflector);
     expect(() => guard.canActivate(mockContext({ role: "champion" }))).toThrow(ForbiddenException);
   });
+
+  it("rejects the request when no user is present, even if no @Roles metadata is set", () => {
+    const reflector = { getAllAndOverride: () => undefined } as unknown as Reflector;
+    const guard = new RolesGuard(reflector);
+    expect(() => guard.canActivate(mockContext(undefined))).toThrow(ForbiddenException);
+  });
 });

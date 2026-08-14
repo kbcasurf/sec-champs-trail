@@ -23,4 +23,14 @@ describe("TeamScopeGuard", () => {
       guard.canActivate(mockContext({ role: "champion", teamId: "team-1" }, { teamId: "team-2" })),
     ).toThrow(ForbiddenException);
   });
+
+  it("rejects an admin when the route teamId param is missing", () => {
+    expect(() => guard.canActivate(mockContext({ role: "admin", teamId: null }, {}))).toThrow(ForbiddenException);
+  });
+
+  it("rejects a champion when the route teamId param is missing", () => {
+    expect(() => guard.canActivate(mockContext({ role: "champion", teamId: "team-1" }, {}))).toThrow(
+      ForbiddenException,
+    );
+  });
 });
