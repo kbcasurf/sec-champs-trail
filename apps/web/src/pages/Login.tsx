@@ -1,19 +1,21 @@
 import { FormEvent, useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
+import { useAuth } from "../auth/AuthContext";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const res = await fetch(`${API_URL}/auth/login`, {
+    const res = await apiFetch("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
@@ -22,8 +24,8 @@ export function Login() {
       return;
     }
 
-    const { accessToken } = await res.json();
-    localStorage.setItem("accessToken", accessToken);
+    setUser(await res.json());
+    navigate("/dashboard");
   }
 
   return (
