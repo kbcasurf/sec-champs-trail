@@ -17,7 +17,9 @@ AI-generated training tracks or executive reports) is treated as a derivative
 of this material and is labeled as "AI-generated/adapted" wherever it is
 shown to end users, to keep it distinguishable from the original OWASP text.
 
-This project's own code is licensed separately — see `LICENSE`.
+This project's own code is licensed separately under the **MIT License** — see
+`LICENSE`. The MIT license covers the source code only; it does not extend to
+the CC BY-SA 4.0 content described above.
 
 ## Maturity scale (not from OWASP)
 
