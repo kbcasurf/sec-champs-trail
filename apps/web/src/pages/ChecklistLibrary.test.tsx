@@ -46,4 +46,39 @@ describe("ChecklistLibrary page", () => {
     });
     expect(checkbox).toBeChecked();
   });
+
+  it("shows error message when toggle fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "c@example.com", role: "champion", teamId: "team-1" }) });
+        }
+        if (init?.method === "PATCH") {
+          return Promise.resolve({ ok: false, json: async () => ({ error: "not found" }) });
+        }
+        if (url.includes("/checklist-progress")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => [{ id: "item-1", title: "Highlight your security culture when hiring", status: "pending" }],
+          });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+    render(
+      <AuthProvider>
+        <ChecklistLibrary />
+      </AuthProvider>,
+    );
+
+    const checkbox = await screen.findByRole("checkbox", { name: /highlight your security culture when hiring/i });
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+
+    const errorMessage = await screen.findByRole("alert");
+    expect(errorMessage).toHaveTextContent("Could not update progress.");
+    expect(checkbox).not.toBeChecked();
+  });
 });
