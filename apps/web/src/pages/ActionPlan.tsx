@@ -44,7 +44,6 @@ export function ActionPlanPage() {
 
   useEffect(() => {
     loadPlan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId]);
 
   async function handleGenerate() {

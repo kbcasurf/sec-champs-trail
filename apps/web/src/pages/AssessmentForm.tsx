@@ -22,9 +22,10 @@ export function AssessmentForm() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch("/principles")
-      .then((res) => res.json())
-      .then(setPrinciples);
+    apiFetch("/principles").then(async (res) => {
+      if (!res.ok) return;
+      setPrinciples(await res.json());
+    });
   }, []);
 
   async function handleSubmit(e: FormEvent) {

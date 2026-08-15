@@ -22,9 +22,10 @@ export function Dashboard() {
 
   useEffect(() => {
     if (user?.role === "admin") {
-      apiFetch("/teams")
-        .then((res) => res.json())
-        .then(setTeams);
+      apiFetch("/teams").then(async (res) => {
+        if (!res.ok) return;
+        setTeams(await res.json());
+      });
     }
   }, [user]);
 
