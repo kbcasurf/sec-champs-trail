@@ -13,8 +13,8 @@ terminar — um log de execução ao lado do plano.
 
 ```
 Fase 0  ████████████████████ 100%  Implementado (main)
-Fase 1a ░░░░░░░░░░░░░░░░░░░░   0%  Próximo — spec ainda não iniciada
-Fase 1b ░░░░░░░░░░░░░░░░░░░░   0%  Aguardando Fase 1a
+Fase 1a ████████████████████ 100%  Implementado (main)
+Fase 1b ░░░░░░░░░░░░░░░░░░░░   0%  Próximo — spec ainda não iniciada
 Fase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Aguardando Fase 1b
 Fase 3  ░░░░░░░░░░░░░░░░░░░░   0%  Aguardando Fase 2
 ```
@@ -46,25 +46,40 @@ sem nenhuma tela ou fluxo de produto ainda.
 completa): JWT em `localStorage`, CORS permissivo, credenciais padrão de dev no Docker
 Compose, `LICENSE` do código ainda não criado, `Champion` sem `organizationId` direto.
 
-## Fase 1a — MVP sem IA (próxima)
+## Fase 1a — MVP sem IA ✅ Implementado
 
 **Objetivo:** produto utilizável **sem** chave de IA configurada.
 
-**Escopo** (PRD F1 + F4 + F2 simplificado):
-- **F1 — Avaliação de Maturidade**: questionário estruturado nos 10 princípios OWASP,
-  score 0-4 por princípio, visualização tipo radar chart.
-- **F4 — Biblioteca de Checklists**: checklists oficiais navegáveis por princípio e fase
-  do ciclo de vida, com marcação de progresso por organização.
-- **F2 simplificado — Plano de Ação por regras**: roadmap gerado a partir do score da
-  avaliação, priorizando princípios com menor maturidade, sem IA — baseado em regras
-  simples sobre os checklists já curados na Fase 0.
+**Entregue** (mesclado em `main` em 2026-08-15):
+- **Gestão de Team/Champion**: admin cria Teams, cria Champions e os atribui a um Team
+  (pré-requisito de infraestrutura que não existia na Fase 0).
+- **F1 — Avaliação de Maturidade**: questionário de 10 perguntas (autoavaliação 0-4 com
+  descrição de nível autoral por princípio), por Team, com histórico de snapshots
+  (retake não sobrescreve), radar chart no dashboard.
+- **F4 — Biblioteca de Checklists**: checklists navegáveis por princípio e fase do ciclo
+  de vida, com marcação de progresso por Team.
+- **F2 simplificado — Plano de Ação por regras**: roadmap 3/6/12 meses gerado por regra
+  determinística (ranking por score + `Principle.order`, buckets 3/3/4), sem IA;
+  progresso de checklist preservado ao regenerar o plano.
+- Migração do JWT de resposta no corpo para cookie `httpOnly` + `SameSite=Strict`;
+  guards `RolesGuard`/`TeamScopeGuard` (nenhuma rota tinha guard até esta fase).
 
-**Decisões pendentes que a spec da Fase 1a precisa fechar** (levantadas no log de
-execução da Fase 0): estratégia de storage do JWT no frontend; se `Champion` precisa de
-uma FK direta para `Organization` para suportar autorização; se os 2 mapeamentos
-`principleId` levemente frouxos nos checklists da Fase 0 afetam o cálculo de score.
+**Documentos:**
+- Spec: `docs/superpowers/specs/2026-08-13-fase1a-mvp-design.md`
+- Plano: `docs/superpowers/plans/2026-08-13-fase1a-mvp.md`
+- Log de execução: `docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`
 
-**Status:** spec ainda não iniciada. Próximo passo do backlog.
+**Decisões da Fase 0 fechadas nesta fase**: JWT em cookie httpOnly (não mais
+localStorage); `Champion` **não** ganhou FK direta para `Organization` (autorização via
+role + teamId, dado uma única Organization por instância); os 2 mapeamentos
+`principleId` frouxos da Fase 0 deixaram de ser relevantes para o score (a avaliação
+virou autoavaliação direta por princípio, não derivada de checklist items).
+
+**Itens adiados para fases futuras** (não bloqueantes, ver o log de execução para a
+lista completa): score de pergunta não respondida vira 0 silenciosamente; sem checagem
+de existência de time em alguns serviços (500 em vez de 400/404 num teamId inválido);
+admin vê `/checklist` e `/action-plan` em branco (só `/dashboard` tem seletor de time);
+suíte e2e com flakiness intermitente por paralelismo do Jest (sem `maxWorkers: 1`).
 
 ## Fase 1b — Camada de IA
 
@@ -83,7 +98,7 @@ Requer: design de prompts, validação de schema da resposta do modelo, cache de
 resultados gerados. Conteúdo gerado por IA deve ser rotulado como tal, distinguível do
 conteúdo OWASP original (ver `ATTRIBUTION.md`).
 
-**Status:** aguardando conclusão da Fase 1a.
+**Status:** spec ainda não iniciada. Próximo passo do backlog.
 
 ## Fase 2 — Pós-MVP
 
