@@ -3,6 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../auth/AuthContext";
 import { ChecklistLibrary } from "./ChecklistLibrary";
 
+const PRINCIPLES = [{ id: "be-passionate-about-security", title: "Be passionate about security" }];
+const CHECKLIST_ITEM = {
+  id: "item-1",
+  principleId: "be-passionate-about-security",
+  phase: "recruitment",
+  title: "Highlight your security culture when hiring",
+  status: "pending",
+};
+
 function mockFetch() {
   vi.stubGlobal(
     "fetch",
@@ -10,14 +19,14 @@ function mockFetch() {
       if (url.includes("/auth/me")) {
         return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "c@example.com", role: "champion", teamId: "team-1" }) });
       }
+      if (url.includes("/principles")) {
+        return Promise.resolve({ ok: true, json: async () => PRINCIPLES });
+      }
       if (init?.method === "PATCH") {
         return Promise.resolve({ ok: true, json: async () => ({ status: "done" }) });
       }
       if (url.includes("/checklist-progress")) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => [{ id: "item-1", title: "Highlight your security culture when hiring", status: "pending" }],
-        });
+        return Promise.resolve({ ok: true, json: async () => [CHECKLIST_ITEM] });
       }
       return Promise.resolve({ ok: false, json: async () => null });
     }),
@@ -25,7 +34,7 @@ function mockFetch() {
 }
 
 describe("ChecklistLibrary page", () => {
-  it("lists checklist items and toggles progress on click", async () => {
+  it("groups items under their phase and principle, and toggles progress on click", async () => {
     mockFetch();
     render(
       <AuthProvider>
@@ -33,7 +42,10 @@ describe("ChecklistLibrary page", () => {
       </AuthProvider>,
     );
 
-    const checkbox = await screen.findByRole("checkbox", { name: /highlight your security culture when hiring/i });
+    expect(await screen.findByRole("heading", { name: "Recruitment" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Be passionate about security" })).toBeInTheDocument();
+
+    const checkbox = screen.getByRole("checkbox", { name: /highlight your security culture when hiring/i });
     expect(checkbox).not.toBeChecked();
 
     fireEvent.click(checkbox);
@@ -54,14 +66,14 @@ describe("ChecklistLibrary page", () => {
         if (url.includes("/auth/me")) {
           return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "c@example.com", role: "champion", teamId: "team-1" }) });
         }
+        if (url.includes("/principles")) {
+          return Promise.resolve({ ok: true, json: async () => PRINCIPLES });
+        }
         if (init?.method === "PATCH") {
           return Promise.resolve({ ok: false, json: async () => ({ error: "not found" }) });
         }
         if (url.includes("/checklist-progress")) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => [{ id: "item-1", title: "Highlight your security culture when hiring", status: "pending" }],
-          });
+          return Promise.resolve({ ok: true, json: async () => [CHECKLIST_ITEM] });
         }
         return Promise.resolve({ ok: false, json: async () => null });
       }),

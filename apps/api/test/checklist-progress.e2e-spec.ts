@@ -10,6 +10,7 @@ describe("ChecklistProgress (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let teamId: string;
+  let otherTeamId: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -27,6 +28,9 @@ describe("ChecklistProgress (e2e)", () => {
     const team = await prisma.team.create({ data: { name: "Checklist Progress E2E Team", organizationId: organization.id } });
     teamId = team.id;
 
+    const otherTeam = await prisma.team.create({ data: { name: "Checklist Progress E2E Other Team", organizationId: organization.id } });
+    otherTeamId = otherTeam.id;
+
     await prisma.champion.upsert({
       where: { email: "checklist-progress-champion@example.com" },
       create: {
@@ -43,6 +47,7 @@ describe("ChecklistProgress (e2e)", () => {
     await prisma.checklistProgress.deleteMany({ where: { teamId } });
     await prisma.champion.deleteMany({ where: { email: "checklist-progress-champion@example.com" } });
     await prisma.team.delete({ where: { id: teamId } });
+    await prisma.team.delete({ where: { id: otherTeamId } });
     await app.close();
   });
 
@@ -58,5 +63,15 @@ describe("ChecklistProgress (e2e)", () => {
 
     const updated = await agent.get(`/teams/${teamId}/checklist-progress`).expect(200);
     expect(updated.body.find((i: { id: string }) => i.id === firstItemId).status).toBe("done");
+  });
+
+  it("rejects a champion updating another team's checklist progress with 403", async () => {
+    const agent = request.agent(app.getHttpServer());
+    await agent.post("/auth/login").send({ email: "checklist-progress-champion@example.com", password: "correct-horse" }).expect(200);
+
+    const items = await agent.get(`/teams/${teamId}/checklist-progress`).expect(200);
+    const someItemId = items.body[0].id;
+
+    await agent.patch(`/teams/${otherTeamId}/checklist-progress/${someItemId}`).send({ status: "done" }).expect(403);
   });
 });

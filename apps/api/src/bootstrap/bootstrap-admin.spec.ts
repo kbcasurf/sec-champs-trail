@@ -10,6 +10,17 @@ describe("bootstrapAdmin", () => {
     ORGANIZATION_NAME: "Acme Corp",
   };
 
+  beforeAll(async () => {
+    await prisma.principleScore.deleteMany({});
+    await prisma.actionItem.deleteMany({});
+    await prisma.actionPlan.deleteMany({});
+    await prisma.checklistProgress.deleteMany({});
+    await prisma.maturityAssessment.deleteMany({});
+    await prisma.champion.deleteMany({});
+    await prisma.team.deleteMany({});
+    await prisma.organization.deleteMany({});
+  });
+
   afterEach(async () => {
     await prisma.champion.deleteMany({ where: { email: env.ADMIN_EMAIL } });
     await prisma.organization.deleteMany({ where: { name: env.ORGANIZATION_NAME } });

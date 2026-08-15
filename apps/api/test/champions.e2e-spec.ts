@@ -31,10 +31,18 @@ describe("Champions (e2e)", () => {
     });
     const team = await prisma.team.create({ data: { name: "Champions E2E Team", organizationId: organization.id } });
     teamId = team.id;
+
+    await prisma.champion.upsert({
+      where: { email: "champions-non-admin@example.com" },
+      create: { email: "champions-non-admin@example.com", passwordHash: await bcrypt.hash("correct-horse", 10), role: "champion", teamId },
+      update: {},
+    });
   });
 
   afterAll(async () => {
-    await prisma.champion.deleteMany({ where: { email: { in: ["champions-admin@example.com", "new-champion@example.com", "duplicate@example.com"] } } });
+    await prisma.champion.deleteMany({
+      where: { email: { in: ["champions-admin@example.com", "champions-non-admin@example.com", "new-champion@example.com", "duplicate@example.com"] } },
+    });
     await prisma.team.delete({ where: { id: teamId } });
     await app.close();
   });
@@ -72,5 +80,11 @@ describe("Champions (e2e)", () => {
       .post("/champions")
       .send({ email: "duplicate@example.com", password: "different-password", role: "admin" })
       .expect(409);
+  });
+
+  it("rejects a non-admin creating a champion with 403", async () => {
+    const agent = request.agent(app.getHttpServer());
+    await agent.post("/auth/login").send({ email: "champions-non-admin@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/champions").send({ email: "should-not-exist@example.com", password: "correct-horse", role: "champion", teamId }).expect(403);
   });
 });

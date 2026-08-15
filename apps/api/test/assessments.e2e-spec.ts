@@ -67,6 +67,25 @@ describe("Assessments (e2e)", () => {
     expect(latest.body.principleScores).toHaveLength(10);
   });
 
+  it("retaking an assessment preserves history instead of overwriting it", async () => {
+    const champion = await loginAsChampionA();
+    const principles = await champion.get("/principles").expect(200);
+    const firstScores = principles.body.map((p: { id: string }) => ({ principleId: p.id, score: 1 }));
+    const secondScores = principles.body.map((p: { id: string }) => ({ principleId: p.id, score: 3 }));
+
+    await champion.post(`/teams/${teamAId}/assessments`).send({ scores: firstScores }).expect(201);
+    await champion.post(`/teams/${teamAId}/assessments`).send({ scores: secondScores }).expect(201);
+
+    const history = await champion.get(`/teams/${teamAId}/assessments`).expect(200);
+    expect(history.body.length).toBeGreaterThanOrEqual(2);
+
+    const createdAtTimestamps = new Set(history.body.map((a: { createdAt: string }) => a.createdAt));
+    expect(createdAtTimestamps.size).toBe(history.body.length);
+
+    const latest = await champion.get(`/teams/${teamAId}/assessments/latest`).expect(200);
+    expect(latest.body.principleScores.every((s: { score: number }) => s.score === 3)).toBe(true);
+  });
+
   it("rejects a submission with fewer than 10 scores", async () => {
     const champion = await loginAsChampionA();
     const principles = await champion.get("/principles").expect(200);
