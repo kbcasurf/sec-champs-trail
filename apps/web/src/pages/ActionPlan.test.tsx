@@ -65,10 +65,53 @@ describe("ActionPlan page", () => {
     );
 
     await screen.findByText(/no action plan yet/i);
+
+    const latestCallsBefore = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
+      String(url).includes("/action-plans/latest"),
+    ).length;
+
     fireEvent.click(screen.getByRole("button", { name: /generate new plan/i }));
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/teams/team-1/action-plans"), expect.objectContaining({ method: "POST" }));
+    });
+
+    await waitFor(() => {
+      const latestCallsAfter = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
+        String(url).includes("/action-plans/latest"),
+      ).length;
+      expect(latestCallsAfter).toBeGreaterThan(latestCallsBefore);
+    });
+  });
+
+  it("shows error when plan generation fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "c@example.com", role: "champion", teamId: "team-1" }) });
+        }
+        if (init?.method === "POST" && url.includes("/action-plans")) {
+          return Promise.resolve({ ok: false, json: async () => null });
+        }
+        if (url.includes("/action-plans/latest")) {
+          return Promise.resolve({ ok: false, json: async () => null });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <ActionPlanPage />
+      </AuthProvider>,
+    );
+
+    await screen.findByText(/no action plan yet/i);
+    fireEvent.click(screen.getByRole("button", { name: /generate new plan/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/failed to generate action plan/i);
     });
   });
 });
