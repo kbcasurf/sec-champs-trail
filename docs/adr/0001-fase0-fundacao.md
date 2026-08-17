@@ -1,197 +1,200 @@
-# ADR 0001: Decisões de arquitetura da Fase 0 (Fundação)
+# ADR 0001: Phase 0 (Foundation) architecture decisions
 
-- Status: Aceito
-- Data: 2026-08-10
-- PRD de origem: `PRD-security-champions-assistant.md`
-- Spec derivada: `docs/superpowers/specs/2026-08-10-fase0-fundacao-design.md`
+- Status: Accepted
+- Date: 2026-08-10
+- Source PRD: `PRD-security-champions-assistant.md`
+- Derived spec: `docs/superpowers/specs/2026-08-10-fase0-fundacao-design.md`
 
-## Contexto
+## Context
 
-Este ADR registra as decisões tomadas em sessão de brainstorming (assistida) sobre o
-PRD original do ChampionForge / Security Champions Assistant, antes de detalhar a spec
-técnica da Fase 0. A sessão original em que essas decisões foram discutidas foi perdida
-por uma pane no ambiente antes que um ADR fosse salvo; este documento foi reconstruído a
-partir do histórico de transcript da sessão e confere com o conteúdo já registrado na
-spec da Fase 0 (nenhuma decisão nova é introduzida aqui — este é o registro formal do
-que já estava implícito na spec).
+This ADR records the decisions made in an (assisted) brainstorming session about the
+original ChampionForge / Security Champions Assistant PRD, before detailing Phase 0's
+technical spec. The original session in which these decisions were discussed was lost
+to an environment crash before an ADR was saved; this document was reconstructed from
+the session's transcript history and matches the content already recorded in the
+Phase 0 spec (no new decision is introduced here — this is the formal record of what
+was already implicit in the spec).
 
-Cada decisão abaixo ajusta ou detalha a seção 5 ("Arquitetura Técnica") ou 7
-("Roadmap") do PRD original.
-
----
-
-## Decisão 1 — Ingestão de conteúdo OWASP: curadoria manual, não scraping
-
-**Problema:** o PRD (seção 5.1) sugeria ingestão do conteúdo OWASP via
-scraping/parsing em runtime, mas a seção 8 (riscos) já reconhecia essa abordagem como
-frágil e propunha sincronização manual periódica — as duas seções se contradiziam.
-
-**Opções consideradas:**
-- Curadoria manual, versionada como JSON no repo, com atualização periódica manual documentada.
-- Manter pipeline de scraping/parsing automatizado (runtime ou build-time) com cache local.
-
-**Decisão:** curadoria manual. Conteúdo do Manifesto e dos checklists é transcrito uma
-vez para `packages/owasp-content`, versionado em git. Sem scraping automático.
-
-**Consequências:** mais simples e robusto, elimina dependência de disponibilidade/
-layout do site fonte em runtime. Custo: atualizações de conteúdo exigem processo manual
-recorrente (não há sincronização automática).
+Each decision below adjusts or details section 5 ("Technical Architecture") or 7
+("Roadmap") of the original PRD.
 
 ---
 
-## Decisão 2 — Divisão do MVP em Fase 1a (sem IA) e Fase 1b (com IA)
+## Decision 1 — OWASP content ingestion: manual curation, not scraping
 
-**Problema:** o PRD tratava F1-F5 como uma entrega única de MVP em 4-6 semanas,
-estimativa considerada otimista dado que F3 (trilhas por IA) e F5 (relatório executivo
-por IA) são, cada uma, projetos de prompt-engineering e validação de schema por si só.
+**Problem:** the PRD (section 5.1) suggested ingesting OWASP content via
+scraping/parsing at runtime, but section 8 (risks) already acknowledged that approach as
+fragile and proposed periodic manual synchronization — the two sections contradicted
+each other.
 
-**Opções consideradas:**
-- Dividir em Fase 1a (F1 avaliação de maturidade, F4 checklists, F2 plano de ação por
-  regras simples — sem IA) e Fase 1b (F3 + F5 — camada de IA sobre a base da 1a).
-- Manter F1-F5 como uma única entrega de MVP.
+**Options considered:**
+- Manual curation, versioned as JSON in the repo, with a documented periodic manual
+  update process.
+- Keep an automated scraping/parsing pipeline (runtime or build-time) with a local
+  cache.
 
-**Decisão:** dividir em 1a e 1b.
+**Decision:** manual curation. Manifesto and checklist content is transcribed once into
+`packages/owasp-content`, versioned in git. No automatic scraping.
 
-**Consequências:** o produto fica utilizável (avaliação + checklists + plano de ação)
-antes de a camada de IA existir, reduzindo risco de atraso por causa da complexidade de
-F3/F5 e permitindo validar a base do produto antes de investir em prompt engineering.
-
----
-
-## Decisão 3 — Multi-tenancy: uma Organization por instância
-
-**Problema:** o modelo de dados do PRD já implicava suporte a múltiplas organizações,
-mas F8 (multi-tenant) só estava planejada para a Fase 3 — ambiguidade sobre se o MVP já
-precisaria suportar múltiplas orgs isoladas na mesma instância.
-
-**Opções consideradas:**
-- Uma única `Organization` por instância self-hosted desde a Fase 0 (mas múltiplos
-  `Team`s dentro dela, conforme modelo `Organization → Team` já previsto).
-- Multi-org desde o MVP, pensando em um possível modelo SaaS hospedado no futuro.
-
-**Decisão:** uma `Organization` por instância. F8 original é reavaliado na Fase 3 (pode
-deixar de fazer sentido como feature separada).
-
-**Consequências:** simplifica auth, permissões e onboarding do MVP. Uma futura oferta
-multi-org exigiria trabalho de migração de modelo, não apenas de feature.
+**Consequences:** simpler and more robust, eliminates the runtime dependency on the
+source site's availability/layout. Cost: content updates require a recurring manual
+process (no automatic sync).
 
 ---
 
-## Decisão 4 — Backend: NestJS (não FastAPI)
+## Decision 2 — Splitting the MVP into Phase 1a (no AI) and Phase 1b (with AI)
 
-**Problema:** o PRD deixava em aberto NestJS (Node/TS) ou FastAPI (Python) para o
-backend.
+**Problem:** the PRD treated F1-F5 as a single MVP delivery in 4-6 weeks, an estimate
+considered optimistic given that F3 (AI training tracks) and F5 (AI executive report)
+are each, on their own, prompt-engineering and schema-validation projects.
 
-**Opções consideradas:**
-- Node.js + NestJS — TypeScript full-stack, consistente com o frontend React; SDK
-  oficial da Anthropic em TS; estrutura modular do Nest facilita organizar domínio
-  (assessments, training, reports).
-- Python + FastAPI — bom se houvesse mais familiaridade com Python; pydantic encaixa
-  bem com validação de outputs estruturados de LLM.
+**Options considered:**
+- Split into Phase 1a (F1 maturity assessment, F4 checklists, F2 simple rule-based
+  action plan — no AI) and Phase 1b (F3 + F5 — AI layer on top of the 1a base).
+- Keep F1-F5 as a single MVP delivery.
 
-**Decisão:** NestJS.
+**Decision:** split into 1a and 1b.
 
-**Consequências:** uma única linguagem (TypeScript) em todo o stack de produto,
-reduzindo custo de troca de contexto entre frontend e backend.
-
----
-
-## Decisão 5 — Autenticação do MVP: apenas JWT local
-
-**Problema:** o PRD sugeria "JWT + opção SSO/OIDC" sem definir se OIDC seria necessário
-já no MVP.
-
-**Opções consideradas:**
-- JWT local simples (usuário/senha), com OIDC/SSO documentado como extensão futura
-  (Fase 2/3).
-- OIDC desde o MVP, pensando em adoção corporativa que exige SSO desde o primeiro uso.
-
-**Decisão:** apenas JWT local na Fase 0/1. Sem OIDC/SSO implementado agora.
-
-**Consequências:** reduz complexidade inicial de auth. Adoção corporativa que exija SSO
-obrigatório não é atendida até uma fase futura.
+**Consequences:** the product becomes usable (assessment + checklists + action plan)
+before the AI layer exists, reducing the risk of delay from F3/F5's complexity and
+allowing the product's base to be validated before investing in prompt engineering.
 
 ---
 
-## Decisão 6 — Roadmap aprovado: Fase 0 → 1a → 1b → 2 → 3
+## Decision 3 — Multi-tenancy: one Organization per instance
 
-**Decisão:** seguir a decomposição abaixo, cada fase com spec e plano de implementação
-próprios, escritos e aprovados sequencialmente:
+**Problem:** the PRD's data model already implied support for multiple organizations,
+but F8 (multi-tenant) was only planned for Phase 3 — ambiguity over whether the MVP
+already needed to support multiple isolated orgs on the same instance.
 
-| Fase | Escopo | Entrega |
+**Options considered:**
+- A single `Organization` per self-hosted instance from Phase 0 onward (but multiple
+  `Team`s within it, per the already-planned `Organization → Team` model).
+- Multi-org from the MVP, anticipating a possible future hosted SaaS model.
+
+**Decision:** one `Organization` per instance. The original F8 is re-evaluated in
+Phase 3 (it may no longer make sense as a separate feature).
+
+**Consequences:** simplifies MVP auth, permissions, and onboarding. A future multi-org
+offering would require data-model migration work, not just a feature.
+
+---
+
+## Decision 4 — Backend: NestJS (not FastAPI)
+
+**Problem:** the PRD left the backend choice open between NestJS (Node/TS) or FastAPI
+(Python).
+
+**Options considered:**
+- Node.js + NestJS — full-stack TypeScript, consistent with the React frontend;
+  official Anthropic SDK in TS; Nest's modular structure makes it easier to organize
+  domains (assessments, training, reports).
+- Python + FastAPI — good if there were more familiarity with Python; pydantic fits
+  well with validating structured LLM outputs.
+
+**Decision:** NestJS.
+
+**Consequences:** a single language (TypeScript) across the whole product stack,
+reducing context-switching cost between frontend and backend.
+
+---
+
+## Decision 5 — MVP authentication: local JWT only
+
+**Problem:** the PRD suggested "JWT + optional SSO/OIDC" without defining whether OIDC
+would be needed already in the MVP.
+
+**Options considered:**
+- Simple local JWT (username/password), with OIDC/SSO documented as a future extension
+  (Phase 2/3).
+- OIDC from the MVP, anticipating corporate adoption that requires SSO from first use.
+
+**Decision:** local JWT only in Phase 0/1. No OIDC/SSO implemented now.
+
+**Consequences:** reduces initial auth complexity. Corporate adoption requiring
+mandatory SSO isn't served until a future phase.
+
+---
+
+## Decision 6 — Approved roadmap: Phase 0 → 1a → 1b → 2 → 3
+
+**Decision:** follow the breakdown below, each phase with its own spec and
+implementation plan, written and approved sequentially:
+
+| Phase | Scope | Deliverable |
 |---|---|---|
-| Fase 0 | Monorepo, curadoria OWASP, `ATTRIBUTION.md`, modelo de dados completo, Docker Compose, auth JWT local | Repo rodando localmente, sem features de produto |
-| Fase 1a | F1 (avaliação de maturidade) + F4 (checklists) + F2 simplificado (plano de ação por regras) | Produto utilizável sem chave de IA configurada |
-| Fase 1b | F3 (trilhas de treinamento por IA) + F5 (relatório executivo por IA) | MVP completo conforme PRD original |
-| Fase 2 | F6 (quiz/gamificação) + F7 (comunidade) | Pós-MVP |
-| Fase 3 | F8 (multi-tenant, reavaliado à luz da Decisão 3) + F9 (integração SAMM/Threat Dragon) | Expansão |
+| Phase 0 | Monorepo, OWASP curation, `ATTRIBUTION.md`, full data model, Docker Compose, local JWT auth | Repo running locally, no product features |
+| Phase 1a | F1 (maturity assessment) + F4 (checklists) + simplified F2 (rule-based action plan) | Product usable without an AI key configured |
+| Phase 1b | F3 (AI training tracks) + F5 (AI executive report) | Complete MVP per the original PRD |
+| Phase 2 | F6 (quiz/gamification) + F7 (community) | Post-MVP |
+| Phase 3 | F8 (multi-tenant, re-evaluated per Decision 3) + F9 (SAMM/Threat Dragon integration) | Expansion |
 
 ---
 
-## Decisão 7 — Estrutura do monorepo: npm workspaces simples
+## Decision 7 — Monorepo structure: plain npm workspaces
 
-**Problema:** como organizar frontend (React), backend (NestJS) e conteúdo OWASP
-curado no mesmo repositório.
+**Problem:** how to organize the frontend (React), backend (NestJS), and curated OWASP
+content in the same repository.
 
-**Opções consideradas:**
-- npm workspaces simples (`apps/web`, `apps/api`, `packages/owasp-content` sob um
-  `package.json` raiz), sem ferramenta extra de build orchestration.
-- Turborepo — mesma estrutura de pastas, com orquestração de build/cache.
-- Polyrepo — frontend, backend e conteúdo OWASP em repositórios git distintos.
+**Options considered:**
+- Plain npm workspaces (`apps/web`, `apps/api`, `packages/owasp-content` under a root
+  `package.json`), no extra build-orchestration tool.
+- Turborepo — same folder structure, with build/cache orchestration.
+- Polyrepo — frontend, backend, and OWASP content in separate git repositories.
 
-**Decisão:** npm workspaces simples.
+**Decision:** plain npm workspaces.
 
-**Consequências:** menor barreira de entrada para contribuidores de um projeto
-open-source novo; sem overhead de ferramenta adicional. Se o número de pacotes crescer
-significativamente, orquestração de build pode precisar ser revisitada.
-
----
-
-## Decisão 8 — Local do conteúdo OWASP curado: dentro do monorepo
-
-**Opções consideradas:**
-- `packages/owasp-content` dentro do monorepo, versionado junto com o código
-  consumidor.
-- Repositório separado, consumido como dependência externa (submodule ou pacote
-  publicado).
-
-**Decisão:** dentro do monorepo, como package próprio.
-
-**Consequências:** mantém schema de conteúdo e código que o consome sempre em
-sincronia na mesma revisão/PR. Reuso do conteúdo por outros projetos exigiria extração
-posterior.
+**Consequences:** lower barrier to entry for contributors to a new open-source project;
+no extra tooling overhead. If the number of packages grows significantly, build
+orchestration may need to be revisited.
 
 ---
 
-## Decisão 9 — Ferramental de backend: npm + Prisma
+## Decision 8 — Location of the curated OWASP content: inside the monorepo
 
-**Opções consideradas:**
-- npm + Prisma — migrations declarativas, schema tipado, boa ergonomia para o modelo
-  `Organization → Team → Champion → Assessment`.
-- pnpm + TypeORM — pnpm mais eficiente em disco; TypeORM é a integração mais comum do
-  ecossistema NestJS via decorators, porém com migrations manuais mais trabalhosas.
+**Options considered:**
+- `packages/owasp-content` inside the monorepo, versioned alongside the code that
+  consumes it.
+- A separate repository, consumed as an external dependency (submodule or published
+  package).
 
-**Decisão:** npm + Prisma.
+**Decision:** inside the monorepo, as its own package.
 
-**Consequências:** ORM com boa documentação para contribuidores open-source; único
-gerenciador de pacotes (npm) em todo o monorepo, sem mistura com pnpm.
+**Consequences:** keeps the content schema and the code that consumes it always in
+sync on the same revision/PR. Reuse of the content by other projects would require
+later extraction.
 
 ---
 
-## Decisão 10 — Inicialização do controle de versão
+## Decision 9 — Backend tooling: npm + Prisma
 
-**Decisão:** `git init` + `.gitignore` + primeiro commit ao final da Fase 0, feito em
+**Options considered:**
+- npm + Prisma — declarative migrations, typed schema, good ergonomics for the
+  `Organization → Team → Champion → Assessment` model.
+- pnpm + TypeORM — pnpm is more disk-efficient; TypeORM is the NestJS ecosystem's most
+  common integration via decorators, but with more cumbersome manual migrations.
+
+**Decision:** npm + Prisma.
+
+**Consequences:** an ORM with good documentation for open-source contributors; a single
+package manager (npm) across the whole monorepo, no mixing with pnpm.
+
+---
+
+## Decision 10 — Version control initialization
+
+**Decision:** `git init` + `.gitignore` + first commit at the end of Phase 0, done in
 `f0c78b5` ("Add PRD and Fase 0 (foundation) design spec").
 
-**Consequências:** nenhuma — decisão operacional, já executada.
+**Consequences:** none — an operational decision, already executed.
 
 ---
 
-## Notas
+## Notes
 
-- Todas as decisões acima já estavam refletidas na spec aprovada
-  `docs/superpowers/specs/2026-08-10-fase0-fundacao-design.md`; este ADR é o registro
-  formal que faltava, não uma revisão de escopo.
-- A sessão original também havia criado um backlog de 8 tarefas (specs + planos para
-  Fase 0, 1a, 1b, 2 e 3), que não sobreviveu à pane. Deve ser recriado conforme o
-  trabalho avançar.
+- All decisions above were already reflected in the approved spec
+  `docs/superpowers/specs/2026-08-10-fase0-fundacao-design.md`; this ADR is the formal
+  record that was missing, not a scope revision.
+- The original session had also created a backlog of 8 tasks (specs + plans for
+  Phase 0, 1a, 1b, 2, and 3), which didn't survive the crash. It should be recreated as
+  work progresses.

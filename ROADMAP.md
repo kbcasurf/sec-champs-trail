@@ -1,140 +1,139 @@
 # Roadmap — ChampionForge / Security Champions Assistant
 
-Este documento é a fonte de verdade **atual** para o status e a ordem das fases do
-projeto. Ele substitui a tabela de roadmap da seção 7 do
-`PRD-security-champions-assistant.md` (mantida ali como registro histórico da proposta
-original) com a decomposição revisada em `docs/adr/0001-fase0-fundacao.md` (Decisão 6).
+This document is the **current** source of truth for the status and ordering of the
+project's phases. It replaces the roadmap table in section 7 of
+`PRD-security-champions-assistant.md` (kept there as a historical record of the original
+proposal) with the revised breakdown from `docs/adr/0001-fase0-fundacao.md` (Decision 6).
 
-Cada fase, quando iniciada, ganha sua própria spec de design em
-`docs/superpowers/specs/`, um plano de implementação em `docs/superpowers/plans/`, e — ao
-terminar — um log de execução ao lado do plano.
+Each phase, once started, gets its own design spec in `docs/superpowers/specs/`, an
+implementation plan in `docs/superpowers/plans/`, and — once finished — an execution log
+next to the plan.
 
-## Status geral
+## Overall status
 
 ```
-Fase 0  ████████████████████ 100%  Implementado (main)
-Fase 1a ████████████████████ 100%  Implementado (main)
-Fase 1b ░░░░░░░░░░░░░░░░░░░░   0%  Próximo — spec ainda não iniciada
-Fase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Aguardando Fase 1b
-Fase 3  ░░░░░░░░░░░░░░░░░░░░   0%  Aguardando Fase 2
+Phase 0  ████████████████████ 100%  Implemented (main)
+Phase 1a ████████████████████ 100%  Implemented (main)
+Phase 1b ░░░░░░░░░░░░░░░░░░░░   0%  Next — spec not started yet
+Phase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Waiting on Phase 1b
+Phase 3  ░░░░░░░░░░░░░░░░░░░░   0%  Waiting on Phase 2
 ```
 
-## Fase 0 — Fundação ✅ Implementado
+## Phase 0 — Foundation ✅ Implemented
 
-**Objetivo:** repositório funcional, versionado, com dados de referência OWASP curados,
-sem nenhuma tela ou fluxo de produto ainda.
+**Goal:** a functional, version-controlled repository with curated OWASP reference
+data, with no product screens or flows yet.
 
-**Entregue** (mesclado em `main` em 2026-08-12):
-- Monorepo npm workspaces (`apps/api`, `apps/web`, `packages/owasp-content`).
-- Manifesto OWASP (10 princípios) e checklists de recruitment/development-retention
-  curados manualmente a partir do site oficial, com atribuição CC BY-SA 4.0 por item.
-- Schema Prisma completo (todas as entidades de todas as fases, mesmo as sem endpoint
-  ainda) + seed automático no boot.
-- Auth JWT local (bcrypt) + script de bootstrap do primeiro admin (sem rota pública de
-  criação de organização).
-- Docker Compose funcional de ponta a ponta (Postgres + API + Web).
+**Delivered** (merged to `main` on 2026-08-12):
+- npm workspaces monorepo (`apps/api`, `apps/web`, `packages/owasp-content`).
+- OWASP Manifesto (10 principles) and recruitment/development-retention checklists,
+  manually curated from the official site, with CC BY-SA 4.0 attribution per item.
+- Full Prisma schema (all entities for all phases, even those without an endpoint yet)
+  + automatic seed on boot.
+- Local JWT auth (bcrypt) + bootstrap script for the first admin (no public route for
+  creating an organization).
+- Fully working Docker Compose stack (Postgres + API + Web).
 - CI (GitHub Actions: lint + typecheck + test + e2e).
-- `ATTRIBUTION.md`, `README.md` com quickstart.
+- `ATTRIBUTION.md`, `README.md` with a quickstart.
 
-**Documentos:**
+**Documents:**
 - ADR: `docs/adr/0001-fase0-fundacao.md`
 - Spec: `docs/superpowers/specs/2026-08-10-fase0-fundacao-design.md`
-- Plano: `docs/superpowers/plans/2026-08-10-fase0-fundacao.md`
-- Log de execução: `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`
+- Plan: `docs/superpowers/plans/2026-08-10-fase0-fundacao.md`
+- Execution log: `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`
 
-**Itens adiados para fases futuras** (não bloqueantes, ver o log de execução para a lista
-completa): JWT em `localStorage`, CORS permissivo, credenciais padrão de dev no Docker
-Compose, `LICENSE` do código ainda não criado, `Champion` sem `organizationId` direto.
+**Items deferred to future phases** (non-blocking, see the execution log for the full
+list): JWT in `localStorage`, permissive CORS, default dev credentials in Docker
+Compose, code `LICENSE` not yet created, `Champion` without a direct `organizationId`.
 
-## Fase 1a — MVP sem IA ✅ Implementado
+## Phase 1a — MVP without AI ✅ Implemented
 
-**Objetivo:** produto utilizável **sem** chave de IA configurada.
+**Goal:** a usable product **without** an AI key configured.
 
-**Entregue** (mesclado em `main` em 2026-08-15):
-- **Gestão de Team/Champion**: admin cria Teams, cria Champions e os atribui a um Team
-  (pré-requisito de infraestrutura que não existia na Fase 0).
-- **F1 — Avaliação de Maturidade**: questionário de 10 perguntas (autoavaliação 0-4 com
-  descrição de nível autoral por princípio), por Team, com histórico de snapshots
-  (retake não sobrescreve), radar chart no dashboard.
-- **F4 — Biblioteca de Checklists**: checklists navegáveis por princípio e fase do ciclo
-  de vida, com marcação de progresso por Team.
-- **F2 simplificado — Plano de Ação por regras**: roadmap 3/6/12 meses gerado por regra
-  determinística (ranking por score + `Principle.order`, buckets 3/3/4), sem IA;
-  progresso de checklist preservado ao regenerar o plano.
-- Migração do JWT de resposta no corpo para cookie `httpOnly` + `SameSite=Strict`;
-  guards `RolesGuard`/`TeamScopeGuard` (nenhuma rota tinha guard até esta fase).
+**Delivered** (merged to `main` on 2026-08-15):
+- **Team/Champion management**: admin creates Teams, creates Champions, and assigns
+  them to a Team (an infrastructure prerequisite that didn't exist in Phase 0).
+- **F1 — Maturity Assessment**: 10-question questionnaire (0-4 self-assessment with an
+  original per-level description per principle), per Team, with snapshot history
+  (retaking never overwrites), radar chart on the dashboard.
+- **F4 — Checklist Library**: checklists browsable by principle and lifecycle phase,
+  with per-Team progress tracking.
+- **Simplified F2 — Rule-based Action Plan**: 3/6/12-month roadmap generated by a
+  deterministic rule (ranked by score + `Principle.order`, 3/3/4 buckets), no AI;
+  checklist progress is preserved when the plan is regenerated.
+- Migrated the JWT from the response body to an `httpOnly` + `SameSite=Strict` cookie;
+  `RolesGuard`/`TeamScopeGuard` guards (no route had a guard before this phase).
 
-**Documentos:**
+**Documents:**
 - Spec: `docs/superpowers/specs/2026-08-13-fase1a-mvp-design.md`
-- Plano: `docs/superpowers/plans/2026-08-13-fase1a-mvp.md`
-- Log de execução: `docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`
+- Plan: `docs/superpowers/plans/2026-08-13-fase1a-mvp.md`
+- Execution log: `docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`
 
-**Decisões da Fase 0 fechadas nesta fase**: JWT em cookie httpOnly (não mais
-localStorage); `Champion` **não** ganhou FK direta para `Organization` (autorização via
-role + teamId, dado uma única Organization por instância); os 2 mapeamentos
-`principleId` frouxos da Fase 0 deixaram de ser relevantes para o score (a avaliação
-virou autoavaliação direta por princípio, não derivada de checklist items).
+**Phase 0 decisions closed in this phase**: JWT in an httpOnly cookie (no longer
+localStorage); `Champion` **did not** get a direct FK to `Organization` (authorization
+via role + teamId, given a single Organization per instance); the 2 loose
+`principleId` mappings from Phase 0 stopped being relevant to the score (the assessment
+became a direct per-principle self-assessment, not derived from checklist items).
 
-**Itens adiados para fases futuras** (não bloqueantes, ver o log de execução para a
-lista completa): score de pergunta não respondida vira 0 silenciosamente; sem checagem
-de existência de time em alguns serviços (500 em vez de 400/404 num teamId inválido);
-admin vê `/checklist` e `/action-plan` em branco (só `/dashboard` tem seletor de time);
-suíte e2e com flakiness intermitente por paralelismo do Jest (sem `maxWorkers: 1`).
+**Items deferred to future phases** (non-blocking, see the execution log for the full
+list): an unanswered question's score silently becomes 0; some services don't check
+whether a team exists (500 instead of 400/404 on an invalid teamId); admins see
+`/checklist` and `/action-plan` blank (only `/dashboard` has a team selector); the e2e
+suite has intermittent flakiness from Jest parallelism (no `maxWorkers: 1`).
 
-## Fase 1b — Camada de IA
+## Phase 1b — AI layer
 
-**Objetivo:** completar o MVP original do PRD com as features que dependem de um
-provedor de IA configurado pelo usuário.
+**Goal:** complete the original PRD MVP with the features that depend on an
+AI provider configured by the user.
 
-**Escopo** (PRD F3 + F5):
-- **F3 — Gerador de Trilhas de Treinamento**: a partir de stack tecnológica, nível de
-  experiência e tempo disponível do time, gera trilha de estudo (tópicos priorizados,
-  exercícios práticos, quiz), exportável em Markdown/PDF.
-- **F5 — Relatório Executivo**: relatório em linguagem executiva a partir dos dados de
-  maturidade e progresso da Fase 1a, para justificar investimento no programa perante
-  liderança.
+**Scope** (PRD F3 + F5):
+- **F3 — Training Track Generator**: from the team's tech stack, experience level, and
+  available time, generates a study track (prioritized topics, practical exercises,
+  quiz), exportable to Markdown/PDF.
+- **F5 — Executive Report**: a report in executive language generated from the
+  Phase 1a maturity and progress data, to justify investment in the program to
+  leadership.
 
-Requer: design de prompts, validação de schema da resposta do modelo, cache de
-resultados gerados. Conteúdo gerado por IA deve ser rotulado como tal, distinguível do
-conteúdo OWASP original (ver `ATTRIBUTION.md`).
+Requires: prompt design, model response schema validation, generated-result caching.
+AI-generated content must be labeled as such, distinguishable from the original OWASP
+content (see `ATTRIBUTION.md`).
 
-**Status:** spec ainda não iniciada. Próximo passo do backlog.
+**Status:** spec not started yet. Next item in the backlog.
 
-## Fase 2 — Pós-MVP
+## Phase 2 — Post-MVP
 
-**Objetivo:** gamificação e comunidade.
+**Goal:** gamification and community.
 
-**Escopo** (PRD F6 + F7):
-- **F6 — Quiz Engine / Gamificação**: geração automática de quizzes por tópico,
-  leaderboard por organização, possível integração com CTF-style challenges (ex: OWASP
-  Juice Shop).
-- **F7 — Comunidade / Knowledge Sharing**: espaço para champions compartilharem
-  descobertas e dúvidas (fórum simples ou webhook para Discord/Slack).
+**Scope** (PRD F6 + F7):
+- **F6 — Quiz Engine / Gamification**: automatic quiz generation per topic,
+  per-organization leaderboard, possible integration with CTF-style challenges (e.g.
+  OWASP Juice Shop).
+- **F7 — Community / Knowledge Sharing**: a space for champions to share findings and
+  questions (a simple forum or a webhook to Discord/Slack).
 
-**Status:** aguardando conclusão da Fase 1b.
+**Status:** waiting on Phase 1b to complete.
 
-## Fase 3 — Expansão
+## Phase 3 — Expansion
 
-**Objetivo:** integrações e reavaliação de escopo à luz do que já foi decidido.
+**Goal:** integrations and re-evaluating scope in light of decisions already made.
 
-**Escopo** (PRD F8 + F9, ajustado pela ADR 0001):
-- **F8 — Multi-tenant**: a Fase 0 já fixou "uma Organization por instância self-hosted".
-  F8 original (multi-org na mesma instância) é **reavaliada** aqui — pode nem fazer mais
-  sentido como feature separada; ver ADR 0001, Decisão 3.
-- **F9 — Integração com SAMM/Threat Dragon**: painel unificado de maturidade AppSec,
-  conectando com os outros projetos do portfólio.
+**Scope** (PRD F8 + F9, adjusted by ADR 0001):
+- **F8 — Multi-tenant**: Phase 0 already settled on "one Organization per self-hosted
+  instance." The original F8 (multi-org in the same instance) is **re-evaluated** here
+  — it may no longer make sense as a separate feature; see ADR 0001, Decision 3.
+- **F9 — Integration with SAMM/Threat Dragon**: a unified AppSec maturity dashboard,
+  connecting with the other projects in the portfolio.
 
-**Status:** aguardando conclusão da Fase 2.
+**Status:** waiting on Phase 2 to complete.
 
-## Fora de escopo (todo o projeto, por enquanto)
+## Out of scope (whole project, for now)
 
-Conforme PRD seção 3.3: não é uma plataforma de LMS completa (sem vídeo hosting,
-certificados formais); não substitui SAST/DAST — é sobre pessoas e processo, não sobre
-código.
+Per PRD section 3.3: not a full LMS platform (no video hosting, no formal
+certificates); doesn't replace SAST/DAST — it's about people and process, not code.
 
-## Convenções
+## Conventions
 
-- Cada fase = 1 spec de design (brainstorming) + 1 plano de implementação (TDD,
-  tarefa a tarefa) + 1 log de execução ao final.
-- Decisões que ajustam o PRD original ganham um ADR em `docs/adr/`.
-- Este arquivo é atualizado ao final de cada fase (status, itens adiados, próxima fase).
+- Each phase = 1 design spec (brainstorming) + 1 implementation plan (TDD, task by
+  task) + 1 execution log at the end.
+- Decisions that adjust the original PRD get an ADR under `docs/adr/`.
+- This file is updated at the end of each phase (status, deferred items, next phase).
