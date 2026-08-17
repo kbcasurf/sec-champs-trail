@@ -1,107 +1,107 @@
 # ChampionForge
 
-Ferramenta open-source para ajudar organizações a construir, operar e amadurecer
-programas de Security Champions, usando o **OWASP Security Champions Guide** (Manifesto
-de 10 princípios + checklists oficiais) como espinha dorsal. Ver
-`PRD-security-champions-assistant.md` para o produto completo e `ROADMAP.md` para o
-status atual de cada fase.
+Open-source tool to help organizations build, run, and mature Security Champions
+programs, using the **OWASP Security Champions Guide** (10-principle Manifesto +
+official checklists) as its backbone. See `PRD-security-champions-assistant.md` for the
+full product vision and `ROADMAP.md` for the current status of each phase.
 
 ## Status
 
-**Fase 0 (Fundação) e Fase 1a (MVP sem IA): implementadas.** O produto já é utilizável
-de ponta a ponta **sem** nenhuma chave de IA configurada — avaliação de maturidade do
-programa de champions, biblioteca de checklists e plano de ação gerado por regras, todos
-descritos abaixo. A camada de IA (geração de trilhas de treinamento e relatório
-executivo) é o escopo da Fase 1b, o próximo item do roadmap. Detalhes:
-`ROADMAP.md`, `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md` e
+**Phase 0 (Foundation) and Phase 1a (MVP without AI): implemented.** The product is
+already usable end to end **without** any AI key configured — champion program maturity
+assessment, checklist library, and a rule-based action plan, all described below. The AI
+layer (training track generation and executive report) is the scope of Phase 1b, the
+next roadmap item. Details:
+`ROADMAP.md`, `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md` and
 `docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`.
 
-## Funcionalidades atuais
+## Current features
 
-Importante: **isto não é uma ferramenta de avaliação de maturidade de SDLC/código**
-(isso já é papel de outras ferramentas do portfólio, como o SAMMwise-ai, baseadas em
-OWASP SAMM). O ChampionForge mede a maturidade de **como a organização recruta, treina e
-retém security champions** — os 10 princípios do Manifesto OWASP Security Champions
-Guide — não a postura de segurança do código que os times produzem.
+Important: **this is not an SDLC/code maturity assessment tool** (that's already the
+role of other tools in the portfolio, such as SAMMwise-ai, based on OWASP SAMM).
+ChampionForge measures the maturity of **how the organization recruits, trains, and
+retains security champions** — the 10 principles of the OWASP Security Champions Guide
+Manifesto — not the security posture of the code teams produce.
 
-- **Autenticação** — login local por e-mail/senha (JWT em cookie `httpOnly`). Não existe
-  cadastro público; o primeiro administrador é criado via script de bootstrap (ver
-  Quickstart), e administradores subsequentes/champions são criados pela própria UI.
-- **Administração de Times e Champions** *(admin)* — em `/teams`: criar Teams, criar
-  Champions e atribuí-los a um Team. Um `Champion` com role `champion` sempre precisa
-  estar associado a um Team; administradores podem existir sem Team (supervisionam
-  todos).
-- **Avaliação de Maturidade do Programa** *(F1, em `/assessment/new` e `/dashboard`)* —
-  questionário de 10 perguntas (uma por princípio do Manifesto), cada uma respondida
-  numa escala 0-4 com descrição própria por nível. A avaliação é por Team, e cada
-  submissão cria um novo snapshot histórico (refazer a avaliação nunca apaga a anterior).
-  O dashboard mostra um radar chart do snapshot mais recente do time (admins escolhem
-  qual time visualizar).
-- **Biblioteca de Checklists** *(F4, em `/checklist`)* — todos os checklists oficiais da
-  OWASP, navegáveis por princípio e por fase do ciclo de vida (recrutamento /
-  desenvolvimento e retenção), com checkbox de progresso por item, por Team.
-- **Plano de Ação por regras** *(F2 simplificado, em `/action-plan`)* — a partir do
-  snapshot de avaliação mais recente do time, gera um roadmap em três horizontes (3, 6 e
-  12 meses), priorizando os princípios com menor maturidade. É determinístico (sem IA):
-  os 3 princípios mais fracos vão para o bucket de 3 meses, os próximos 3 para 6 meses,
-  e os 4 mais fortes para 12 meses. Regenerar o plano nunca reseta o progresso já
-  marcado na biblioteca de checklists — as duas coisas são independentes.
+- **Authentication** — local email/password login (JWT in an `httpOnly` cookie). There
+  is no public sign-up; the first administrator is created via a bootstrap script (see
+  Quickstart), and subsequent administrators/champions are created through the UI
+  itself.
+- **Team and Champion administration** *(admin)* — at `/teams`: create Teams, create
+  Champions, and assign them to a Team. A `Champion` with the `champion` role always
+  needs to be associated with a Team; administrators can exist without a Team (they
+  oversee all of them).
+- **Program Maturity Assessment** *(F1, at `/assessment/new` and `/dashboard`)* — a
+  10-question questionnaire (one per Manifesto principle), each answered on a 0-4 scale
+  with its own per-level description. The assessment is per Team, and each submission
+  creates a new historical snapshot (retaking the assessment never deletes the previous
+  one). The dashboard shows a radar chart of the team's most recent snapshot (admins
+  choose which team to view).
+- **Checklist Library** *(F4, at `/checklist`)* — all official OWASP checklists,
+  browsable by principle and by lifecycle phase (recruitment / development and
+  retention), with a per-item progress checkbox, per Team.
+- **Rule-based Action Plan** *(simplified F2, at `/action-plan`)* — from the team's most
+  recent assessment snapshot, generates a roadmap across three horizons (3, 6, and 12
+  months), prioritizing the principles with the lowest maturity. It's deterministic (no
+  AI): the 3 weakest principles go into the 3-month bucket, the next 3 into the 6-month
+  bucket, and the 4 strongest into the 12-month bucket. Regenerating the plan never
+  resets progress already marked in the checklist library — the two are independent.
 
-## Como usar (passo a passo)
+## How to use it (step by step)
 
-1. Depois do bootstrap (Quickstart abaixo), faça login em `http://localhost:5173` com o
-   e-mail/senha de admin.
-2. Em **Teams**, crie um Team para o time que vai usar o programa.
-3. Ainda em **Teams**, crie um Champion (e-mail/senha), atribuído a esse Team. Esse
-   champion (ou o próprio admin) poderá logar e responder a avaliação daquele time.
-4. Logado como esse champion (ou como admin, que pode ver qualquer time), vá em **New
-   assessment** e responda as 10 perguntas.
-5. Veja o resultado em **Dashboard** (radar chart).
-6. Em **Action plan**, clique em "Generate new plan" para gerar o roadmap priorizado.
-7. Em **Checklist**, marque o progresso dos itens conforme forem sendo implementados —
-   esse progresso aparece refletido no plano de ação, e sobrevive a uma regeneração do
-   plano.
+1. After bootstrapping (Quickstart below), log in at `http://localhost:5173` with the
+   admin email/password.
+2. Under **Teams**, create a Team for the group that will use the program.
+3. Still under **Teams**, create a Champion (email/password), assigned to that Team.
+   That champion (or the admin) can then log in and complete that team's assessment.
+4. Logged in as that champion (or as an admin, who can view any team), go to **New
+   assessment** and answer the 10 questions.
+5. See the result under **Dashboard** (radar chart).
+6. Under **Action plan**, click "Generate new plan" to generate the prioritized roadmap.
+7. Under **Checklist**, check off item progress as it gets implemented — this progress
+   is reflected in the action plan and survives a plan regeneration.
 
 ## Quickstart
 
-1. Copie o template de variáveis de ambiente e preencha os segredos obrigatórios:
+1. Copy the environment variable template and fill in the required secrets:
 
    ```bash
    cp .env.example .env
    ```
 
-   No mínimo, defina `JWT_SECRET` (16+ caracteres, sem valor padrão) e `ADMIN_EMAIL`,
-   `ADMIN_PASSWORD`, `ORGANIZATION_NAME` (usados para inicializar o primeiro admin no
-   passo 3). `WEB_ORIGIN` já vem preenchido para o valor padrão do frontend em dev
-   (`http://localhost:5173`) — só precisa mudar se você alterar essa porta.
+   At minimum, set `JWT_SECRET` (16+ characters, no default value) and `ADMIN_EMAIL`,
+   `ADMIN_PASSWORD`, `ORGANIZATION_NAME` (used to bootstrap the first admin in step 3).
+   `WEB_ORIGIN` already comes pre-filled with the frontend's default dev value
+   (`http://localhost:5173`) — you only need to change it if you change that port.
 
-2. Suba a stack completa (Postgres + API + Web):
+2. Bring up the full stack (Postgres + API + Web):
 
    ```bash
    docker compose up --build -d
    ```
 
-   A API roda as migrations do Prisma e o seed do conteúdo OWASP curado
-   (`Principle`/`ChecklistItem`/`PrincipleMaturityLevel`) automaticamente no boot.
+   The API runs the Prisma migrations and seeds the curated OWASP content
+   (`Principle`/`ChecklistItem`/`PrincipleMaturityLevel`) automatically on boot.
 
-3. Crie a Organization e o primeiro admin (só precisa rodar uma vez por instância — não
-   existe rota pública para isso, de propósito):
+3. Create the Organization and the first admin (only needs to run once per instance —
+   there's no public route for this, by design):
 
    ```bash
    docker compose exec api npm run bootstrap:admin
    ```
 
-   Lê `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ORGANIZATION_NAME` do ambiente.
+   Reads `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ORGANIZATION_NAME` from the environment.
 
-4. Verifique que subiu:
-   - Health check da API: `GET http://localhost:3000/health`
+4. Verify it's up:
+   - API health check: `GET http://localhost:3000/health`
    - Web app: `http://localhost:5173`
 
-5. Faça login com o e-mail/senha do admin e siga o passo a passo da seção acima.
+5. Log in with the admin email/password and follow the step-by-step guide in the
+   section above.
 
-### Resetar o ambiente local
+### Resetting the local environment
 
-Para zerar o banco (perde todos os dados) e recomeçar do zero:
+To wipe the database (loses all data) and start over from scratch:
 
 ```bash
 docker compose down -v
@@ -109,9 +109,9 @@ docker compose up --build -d
 docker compose exec api npm run bootstrap:admin
 ```
 
-### Rodando sem Docker (desenvolvimento)
+### Running without Docker (development)
 
-Requer Node.js ≥20 e um Postgres acessível via `DATABASE_URL`.
+Requires Node.js ≥20 and a Postgres instance reachable via `DATABASE_URL`.
 
 ```bash
 npm install
@@ -119,6 +119,6 @@ npm run db:migrate:deploy -w apps/api
 npm run db:generate -w apps/api
 npm run db:seed -w apps/api
 npm run bootstrap:admin -w apps/api
-npm run start:dev -w apps/api   # API em :3000
-npm run dev -w apps/web         # Web em :5173 (outro terminal)
+npm run start:dev -w apps/api   # API on :3000
+npm run dev -w apps/web         # Web on :5173 (another terminal)
 ```
