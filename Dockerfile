@@ -41,6 +41,12 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/owasp-content/package.json packages/owasp-content/package.json
 RUN npm ci --omit=dev
+# npm's own bundled CLI (not our dependency tree -- see package.json's "overrides")
+# vendors its own old tar/glob/minimatch/cross-spawn/etc with known HIGH/CRITICAL
+# CVEs; Trivy flags them under /usr/local/lib/node_modules/npm/node_modules. It's
+# only needed to run the `npm ci` above -- nothing at runtime invokes `npm`/`npx`
+# (the CMD below calls the installed `prisma` binary directly instead of `npx prisma`).
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Prisma's generated client + query engine (produced by `prisma generate` in the
 # api-build stage; a plain prod `npm ci` does not regenerate it).
@@ -69,4 +75,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]
+CMD ["sh", "-c", "/app/node_modules/.bin/prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]
