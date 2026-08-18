@@ -192,9 +192,16 @@ polish improvement. Full analysis in
   email, and log-out stack into ~230px of header height on narrow viewports.
   `ProtectedRoute.tsx` now collapses that content behind a hamburger toggle below the `md`
   breakpoint, reusing the same nav/user-info DOM (not a duplicate) so the desktop
-  appearance and `ProtectedRoute.test.tsx` are both unaffected.
+  appearance is unaffected. The header's full-body rewrite for this change initially
+  dropped the first amendment's `flex-wrap` class on the outer header container,
+  reintroducing horizontal overflow at mobile widths when the menu was open — caught in
+  final review and fixed by restoring `flex-wrap`. `ProtectedRoute.test.tsx` did not cover
+  the new `menuOpen` state, hamburger toggle, or auto-close-on-navigate behavior when this
+  amendment was first written; coverage for the toggle's `aria-expanded`/`aria-label`
+  state and the auto-close-on-navigate behavior was added afterward.
 
 Tested via `npm run test -w apps/web` (all pre-existing tests plus new/extended cases for
-`EmptyState`, `wrapLabel`, and the 4 empty-state usages), `tsc -b`, `eslint apps/web/src`,
-and a `docker compose up --build` cycle with a manual walkthrough at both desktop and
-390×844 viewport widths.
+`EmptyState`, `wrapLabel`, the 4 empty-state usages, and the mobile menu's toggle/auto-close
+behavior), `tsc -b`, and `eslint apps/web/src`. No manual browser walkthrough at 390×844 was
+performed as part of this review pass; verification of the mobile-width fix rests on the
+restored `flex-wrap` class and the automated test coverage above, not a visual check.
