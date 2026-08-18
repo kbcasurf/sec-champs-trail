@@ -70,7 +70,7 @@ export function ProtectedRoute() {
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-line bg-bg-elevated px-4 py-3 sm:px-7">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <polygon points="12,2 20,7 20,17 12,22 4,17 4,7" stroke="#f97316" strokeWidth="1.6" />
