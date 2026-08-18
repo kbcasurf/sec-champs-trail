@@ -64,6 +64,17 @@ describe("Dashboard page", () => {
 
     expect(await screen.findByText(/no assessment yet/i)).toBeInTheDocument();
   });
+
+  it("shows an empty state before an admin selects a team", async () => {
+    mockFetchFor("admin");
+    render(
+      <AuthProvider>
+        <Dashboard />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText(/Pick a team from the dropdown/i)).toBeInTheDocument();
+  });
 });
 
 describe("wrapLabel", () => {

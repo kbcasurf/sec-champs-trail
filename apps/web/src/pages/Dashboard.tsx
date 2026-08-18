@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
+import { EmptyState } from "../components/EmptyState";
 
 export function wrapLabel(text: string, maxCharsPerLine = 18): string[] {
   const words = text.split(" ");
@@ -156,6 +157,13 @@ export function Dashboard() {
             {error}
           </p>
         </div>
+      )}
+
+      {!error && !scores && user?.role === "admin" && !teamId && (
+        <EmptyState
+          title="Select a team to view its maturity dashboard"
+          description="Pick a team from the dropdown above to see its radar chart and score breakdown."
+        />
       )}
 
       {scores && (
