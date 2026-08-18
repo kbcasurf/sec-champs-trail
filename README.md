@@ -17,6 +17,11 @@ next roadmap item. Details:
 `ROADMAP.md`, `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md` and
 `docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`.
 
+**UI design system: implemented.** All six screens (Login, Dashboard, New assessment,
+Checklist, Action plan, Teams) share a dark, branded visual identity instead of
+unstyled Tailwind defaults — see [Design](#design) below and
+[ADR 0003](docs/adr/0003-application-design-system.md).
+
 ## Current features
 
 Important: **this is not an SDLC/code maturity assessment tool** (that's already the
@@ -48,6 +53,22 @@ Manifesto — not the security posture of the code teams produce.
   AI): the 3 weakest principles go into the 3-month bucket, the next 3 into the 6-month
   bucket, and the 4 strongest into the 12-month bucket. Regenerating the plan never
   resets progress already marked in the checklist library — the two are independent.
+
+## Design
+
+The app's visual identity extends the one already established by the README banner
+above: a dark surface, a single orange accent, and a three-font pairing — **Space
+Grotesk** for headings, **IBM Plex Sans** for body text, **IBM Plex Mono** for
+technical/UI labels (nav, badges, buttons). Color and font tokens live in
+`apps/web/tailwind.config.js` (`theme.extend.colors` / `fontFamily`); the fonts load
+via Google Fonts in `apps/web/index.html`, each with a system-font fallback stack.
+
+There is no separate component library — every screen is plain Tailwind utility
+classes on native HTML elements (real `<input type="radio">`/`type="checkbox">`, not
+`<div>`-based custom controls), restyled but not replaced, so existing keyboard and
+screen-reader behavior is preserved. The full rationale, alternatives considered, and
+consequences are recorded in
+[ADR 0003 — Application UI design system](docs/adr/0003-application-design-system.md).
 
 ## How to use it (step by step)
 
