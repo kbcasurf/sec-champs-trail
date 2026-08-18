@@ -123,6 +123,7 @@ describe("ChecklistLibrary page", () => {
     const select = await screen.findByRole("combobox");
     expect(await screen.findByText("Payments")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Recruitment" })).not.toBeInTheDocument();
+    expect(screen.getByText(/pick a team from the dropdown/i)).toBeInTheDocument();
 
     fireEvent.change(select, { target: { value: "team-1" } });
 
