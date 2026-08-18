@@ -105,6 +105,12 @@ jobs:
       - run: npm run build -w packages/owasp-content
       - run: npm run db:generate -w apps/api
       - run: npm run db:migrate:deploy -w apps/api
+      # The e2e specs read already-seeded Principles/ChecklistItems (e.g. GET
+      # /api/principles) rather than creating their own -- when unit and e2e were one
+      # job, prisma/seed.spec.ts (which runs the real seed() against the shared
+      # Postgres) left this in place as a side effect. Split into separate jobs, each
+      # gets its own empty Postgres, so it must be seeded explicitly here.
+      - run: npm run db:seed -w apps/api
       - run: npm run test:e2e -w apps/api
 
   npm-audit:
@@ -211,6 +217,8 @@ jobs:
         run: npm run build -w apps/web
       - name: Assemble the single deployable (mirrors ./Dockerfile's runner stage)
         run: cp -r apps/web/dist apps/api/dist/public
+      - name: Seed OWASP content (mirrors the Dockerfile CMD)
+        run: node apps/api/dist/prisma/seed.js
       - name: Start app in background
         run: |
           node apps/api/dist/src/main.js > "$RUNNER_TEMP/app.log" 2>&1 &
