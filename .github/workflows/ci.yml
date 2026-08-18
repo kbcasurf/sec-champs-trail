@@ -159,14 +159,18 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@v3.96.0
         with:
-          extra_args: --results=verified,unknown
+          # Postgres detector is excluded: it flags the CI-only dev connection
+          # string (postgresql://champion:champion@localhost:5432/championforge,
+          # also in .env.example/docker-compose.yml) as an unverified secret on
+          # every scan, since that host is unreachable from the scan context.
+          extra_args: --results=verified,unknown --exclude-detectors=Postgres
       - name: TruffleHog (full history scan)
         if: github.event_name != 'pull_request'
         uses: trufflesecurity/trufflehog@v3.96.0
         with:
           base: ""
           head: ${{ github.ref_name }}
-          extra_args: --results=verified,unknown
+          extra_args: --results=verified,unknown --exclude-detectors=Postgres
 
   codeql:
     runs-on: ubuntu-latest
