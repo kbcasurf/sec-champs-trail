@@ -114,4 +114,40 @@ describe("ActionPlan page", () => {
       expect(screen.getByRole("alert")).toHaveTextContent(/failed to generate action plan/i);
     });
   });
+
+  it("shows a team selector for admins and disables generation until a team is chosen", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "admin@example.com", role: "admin", teamId: null }) });
+        }
+        if (init?.method === "POST" && url.includes("/action-plans")) {
+          return Promise.resolve({ ok: true, json: async () => PLAN });
+        }
+        if (url.includes("/action-plans/latest")) {
+          return Promise.resolve({ ok: true, json: async () => PLAN });
+        }
+        if (url.includes("/teams")) {
+          return Promise.resolve({ ok: true, json: async () => [{ id: "team-1", name: "Payments" }] });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <ActionPlanPage />
+      </AuthProvider>,
+    );
+
+    const select = await screen.findByRole("combobox");
+    const generateButton = screen.getByRole("button", { name: /generate new plan/i });
+    expect(generateButton).toBeDisabled();
+
+    fireEvent.change(select, { target: { value: "team-1" } });
+
+    await waitFor(() => expect(generateButton).not.toBeDisabled());
+    expect(await screen.findByText(/nominate a captain/i)).toBeInTheDocument();
+  });
 });

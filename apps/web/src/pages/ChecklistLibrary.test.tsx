@@ -93,4 +93,39 @@ describe("ChecklistLibrary page", () => {
     expect(errorMessage).toHaveTextContent("Could not update progress.");
     expect(checkbox).not.toBeChecked();
   });
+
+  it("shows a team selector for admins and loads the selected team's checklist", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "admin@example.com", role: "admin", teamId: null }) });
+        }
+        if (url.includes("/principles")) {
+          return Promise.resolve({ ok: true, json: async () => PRINCIPLES });
+        }
+        if (url.includes("/checklist-progress")) {
+          return Promise.resolve({ ok: true, json: async () => [CHECKLIST_ITEM] });
+        }
+        if (url.includes("/teams")) {
+          return Promise.resolve({ ok: true, json: async () => [{ id: "team-1", name: "Payments" }] });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <ChecklistLibrary />
+      </AuthProvider>,
+    );
+
+    const select = await screen.findByRole("combobox");
+    expect(await screen.findByText("Payments")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Recruitment" })).not.toBeInTheDocument();
+
+    fireEvent.change(select, { target: { value: "team-1" } });
+
+    expect(await screen.findByRole("heading", { name: "Recruitment" })).toBeInTheDocument();
+  });
 });
