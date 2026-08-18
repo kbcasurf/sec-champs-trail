@@ -1,5 +1,7 @@
 # ChampionForge
 
+![ChampionForge banner](assets/banner.png)
+
 Open-source tool to help organizations build, run, and mature Security Champions
 programs, using the **OWASP Security Champions Guide** (10-principle Manifesto +
 official checklists) as its backbone. See `PRD-security-champions-assistant.md` for the
