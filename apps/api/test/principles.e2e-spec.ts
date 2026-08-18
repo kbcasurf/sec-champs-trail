@@ -13,6 +13,7 @@ describe("Principles (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -32,14 +33,14 @@ describe("Principles (e2e)", () => {
 
   it("returns the 10 seeded principles with 5 maturity levels each, for any authenticated role", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "principles-reader@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "principles-reader@example.com", password: "correct-horse" }).expect(200);
 
-    const res = await agent.get("/principles").expect(200);
+    const res = await agent.get("/api/principles").expect(200);
     expect(res.body).toHaveLength(10);
     expect(res.body[0].maturityLevels).toHaveLength(5);
   });
 
   it("returns 401 without a cookie", async () => {
-    await request(app.getHttpServer()).get("/principles").expect(401);
+    await request(app.getHttpServer()).get("/api/principles").expect(401);
   });
 });

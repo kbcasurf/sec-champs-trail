@@ -13,6 +13,7 @@ describe("Teams (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -44,29 +45,29 @@ describe("Teams (e2e)", () => {
 
   async function loginAs(email: string) {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email, password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email, password: "correct-horse" }).expect(200);
     return agent;
   }
 
   it("lets an admin create and list Teams", async () => {
     const admin = await loginAs("teams-admin@example.com");
 
-    const created = await admin.post("/teams").send({ name: "Payments Squad" }).expect(201);
+    const created = await admin.post("/api/teams").send({ name: "Payments Squad" }).expect(201);
     expect(created.body.name).toBe("Payments Squad");
 
-    const list = await admin.get("/teams").expect(200);
+    const list = await admin.get("/api/teams").expect(200);
     expect(list.body.some((t: { id: string }) => t.id === created.body.id)).toBe(true);
 
-    const detail = await admin.get(`/teams/${created.body.id}`).expect(200);
+    const detail = await admin.get(`/api/teams/${created.body.id}`).expect(200);
     expect(detail.body.champions).toEqual([]);
   });
 
   it("rejects a non-admin champion with 403", async () => {
     const champion = await loginAs("teams-champion@example.com");
-    await champion.get("/teams").expect(403);
+    await champion.get("/api/teams").expect(403);
   });
 
   it("rejects an unauthenticated request with 401", async () => {
-    await request(app.getHttpServer()).get("/teams").expect(401);
+    await request(app.getHttpServer()).get("/api/teams").expect(401);
   });
 });

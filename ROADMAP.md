@@ -32,7 +32,9 @@ data, with no product screens or flows yet.
   + automatic seed on boot.
 - Local JWT auth (bcrypt) + bootstrap script for the first admin (no public route for
   creating an organization).
-- Fully working Docker Compose stack (Postgres + API + Web).
+- Fully working Docker Compose stack (Postgres + API + Web, as two separate services
+  at the time — consolidated into a single image on 2026-08-17, see
+  [ADR 0002](docs/adr/0002-single-docker-image.md)).
 - CI (GitHub Actions: lint + typecheck + test + e2e).
 - `ATTRIBUTION.md`, `README.md` with a quickstart.
 

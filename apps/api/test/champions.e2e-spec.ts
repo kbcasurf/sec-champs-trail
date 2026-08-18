@@ -14,6 +14,7 @@ describe("Champions (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -49,14 +50,14 @@ describe("Champions (e2e)", () => {
 
   async function loginAsAdmin() {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "champions-admin@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "champions-admin@example.com", password: "correct-horse" }).expect(200);
     return agent;
   }
 
   it("creates a champion assigned to a team", async () => {
     const admin = await loginAsAdmin();
     const res = await admin
-      .post("/champions")
+      .post("/api/champions")
       .send({ email: "new-champion@example.com", password: "correct-horse", role: "champion", teamId })
       .expect(201);
     expect(res.body).toEqual({ id: expect.any(String), email: "new-champion@example.com", role: "champion", teamId });
@@ -65,7 +66,7 @@ describe("Champions (e2e)", () => {
   it("rejects role 'champion' with no teamId", async () => {
     const admin = await loginAsAdmin();
     await admin
-      .post("/champions")
+      .post("/api/champions")
       .send({ email: "no-team@example.com", password: "correct-horse", role: "champion" })
       .expect(400);
   });
@@ -73,18 +74,18 @@ describe("Champions (e2e)", () => {
   it("rejects duplicate email with 409", async () => {
     const admin = await loginAsAdmin();
     await admin
-      .post("/champions")
+      .post("/api/champions")
       .send({ email: "duplicate@example.com", password: "correct-horse", role: "admin" })
       .expect(201);
     await admin
-      .post("/champions")
+      .post("/api/champions")
       .send({ email: "duplicate@example.com", password: "different-password", role: "admin" })
       .expect(409);
   });
 
   it("rejects a non-admin creating a champion with 403", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "champions-non-admin@example.com", password: "correct-horse" }).expect(200);
-    await agent.post("/champions").send({ email: "should-not-exist@example.com", password: "correct-horse", role: "champion", teamId }).expect(403);
+    await agent.post("/api/auth/login").send({ email: "champions-non-admin@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/champions").send({ email: "should-not-exist@example.com", password: "correct-horse", role: "champion", teamId }).expect(403);
   });
 });

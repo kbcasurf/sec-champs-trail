@@ -13,6 +13,7 @@ describe("ChecklistItems (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -32,9 +33,9 @@ describe("ChecklistItems (e2e)", () => {
 
   it("filters by phase", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "checklist-reader@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "checklist-reader@example.com", password: "correct-horse" }).expect(200);
 
-    const res = await agent.get("/checklist-items?phase=recruitment").expect(200);
+    const res = await agent.get("/api/checklist-items?phase=recruitment").expect(200);
     expect(res.body.length).toBeGreaterThan(0);
     expect(res.body.every((i: { phase: string }) => i.phase === "recruitment")).toBe(true);
   });

@@ -15,6 +15,7 @@ describe("ChecklistProgress (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -53,25 +54,25 @@ describe("ChecklistProgress (e2e)", () => {
 
   it("defaults every item to pending, then reflects a PATCH", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "checklist-progress-champion@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "checklist-progress-champion@example.com", password: "correct-horse" }).expect(200);
 
-    const initial = await agent.get(`/teams/${teamId}/checklist-progress`).expect(200);
+    const initial = await agent.get(`/api/teams/${teamId}/checklist-progress`).expect(200);
     expect(initial.body.every((i: { status: string }) => i.status === "pending")).toBe(true);
 
     const firstItemId = initial.body[0].id;
-    await agent.patch(`/teams/${teamId}/checklist-progress/${firstItemId}`).send({ status: "done" }).expect(200);
+    await agent.patch(`/api/teams/${teamId}/checklist-progress/${firstItemId}`).send({ status: "done" }).expect(200);
 
-    const updated = await agent.get(`/teams/${teamId}/checklist-progress`).expect(200);
+    const updated = await agent.get(`/api/teams/${teamId}/checklist-progress`).expect(200);
     expect(updated.body.find((i: { id: string }) => i.id === firstItemId).status).toBe("done");
   });
 
   it("rejects a champion updating another team's checklist progress with 403", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "checklist-progress-champion@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "checklist-progress-champion@example.com", password: "correct-horse" }).expect(200);
 
-    const items = await agent.get(`/teams/${teamId}/checklist-progress`).expect(200);
+    const items = await agent.get(`/api/teams/${teamId}/checklist-progress`).expect(200);
     const someItemId = items.body[0].id;
 
-    await agent.patch(`/teams/${otherTeamId}/checklist-progress/${someItemId}`).send({ status: "done" }).expect(403);
+    await agent.patch(`/api/teams/${otherTeamId}/checklist-progress/${someItemId}`).send({ status: "done" }).expect(403);
   });
 });

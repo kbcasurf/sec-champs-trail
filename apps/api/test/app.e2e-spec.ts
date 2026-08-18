@@ -11,6 +11,7 @@ describe("AppController (e2e)", () => {
       imports: [AppModule],
     }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     await app.init();
   });
 
@@ -18,9 +19,9 @@ describe("AppController (e2e)", () => {
     await app.close();
   });
 
-  it("GET /health returns ok status", () => {
+  it("GET /api/health returns ok status", () => {
     return request(app.getHttpServer())
-      .get("/health")
+      .get("/api/health")
       .expect(200)
       .expect({ status: "ok" });
   });

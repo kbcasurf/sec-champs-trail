@@ -3,8 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "engines": { "node": ">=20" },
-  "main": "src/index.ts",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
