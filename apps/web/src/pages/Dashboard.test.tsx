@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../auth/AuthContext";
-import { Dashboard } from "./Dashboard";
+import { Dashboard, wrapLabel } from "./Dashboard";
 
 function mockFetchFor(role: "admin" | "champion") {
   vi.stubGlobal(
@@ -63,5 +63,18 @@ describe("Dashboard page", () => {
     );
 
     expect(await screen.findByText(/no assessment yet/i)).toBeInTheDocument();
+  });
+});
+
+describe("wrapLabel", () => {
+  it("wraps a long principle title without cutting words, in 3 lines or fewer", () => {
+    const lines = wrapLabel("Start with a clear vision for your program");
+    expect(lines.join(" ")).toBe("Start with a clear vision for your program");
+    expect(lines.length).toBeLessThanOrEqual(3);
+    lines.forEach((line) => expect(line.length).toBeLessThanOrEqual(18));
+  });
+
+  it("keeps a short title on a single line", () => {
+    expect(wrapLabel("Create a community")).toEqual(["Create a community"]);
   });
 });
