@@ -123,7 +123,7 @@ export function AssessmentForm() {
         );
       })}
 
-      <div className="sticky bottom-0 mt-6 bg-gradient-to-t from-bg from-60% pb-1 pt-4">
+      <div className="sticky bottom-0 z-10 mt-6 border-t border-line bg-bg/95 pb-1 pt-4 backdrop-blur">
         <button
           type="submit"
           disabled={!canSubmit}
