@@ -49,7 +49,7 @@ Manifesto — not the security posture of the code teams produce.
 
 ## How to use it (step by step)
 
-1. After bootstrapping (Quickstart below), log in at `http://localhost:5173` with the
+1. After bootstrapping (Quickstart below), log in at `http://localhost:3000` with the
    admin email/password.
 2. Under **Teams**, create a Team for the group that will use the program.
 3. Still under **Teams**, create a Champion (email/password), assigned to that Team.
@@ -71,30 +71,34 @@ Manifesto — not the security posture of the code teams produce.
 
    At minimum, set `JWT_SECRET` (16+ characters, no default value) and `ADMIN_EMAIL`,
    `ADMIN_PASSWORD`, `ORGANIZATION_NAME` (used to bootstrap the first admin in step 3).
-   `WEB_ORIGIN` already comes pre-filled with the frontend's default dev value
-   (`http://localhost:5173`) — you only need to change it if you change that port.
+   `WEB_ORIGIN` already comes pre-filled with `http://localhost:3000`, the app's own
+   origin under Docker Compose (see [ADR 0002](docs/adr/0002-single-docker-image.md)) —
+   you only need to change it if you change that port.
 
-2. Bring up the full stack (Postgres + API + Web):
+2. Bring up the stack (Postgres + app — api and web are a single image, see
+   [ADR 0002](docs/adr/0002-single-docker-image.md)):
 
    ```bash
    docker compose up --build -d
    ```
 
-   The API runs the Prisma migrations and seeds the curated OWASP content
+   The app runs the Prisma migrations and seeds the curated OWASP content
    (`Principle`/`ChecklistItem`/`PrincipleMaturityLevel`) automatically on boot.
 
 3. Create the Organization and the first admin (only needs to run once per instance —
    there's no public route for this, by design):
 
    ```bash
-   docker compose exec api npm run bootstrap:admin
+   docker compose exec app node dist/src/bootstrap/bootstrap-admin.js
    ```
 
    Reads `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ORGANIZATION_NAME` from the environment.
+   (This is the compiled equivalent of `npm run bootstrap:admin` — the production image
+   doesn't include `ts-node`, which that script needs.)
 
 4. Verify it's up:
-   - API health check: `GET http://localhost:3000/health`
-   - Web app: `http://localhost:5173`
+   - API health check: `GET http://localhost:3000/api/health`
+   - Web app: `http://localhost:3000`
 
 5. Log in with the admin email/password and follow the step-by-step guide in the
    section above.
@@ -106,7 +110,7 @@ To wipe the database (loses all data) and start over from scratch:
 ```bash
 docker compose down -v
 docker compose up --build -d
-docker compose exec api npm run bootstrap:admin
+docker compose exec app node dist/src/bootstrap/bootstrap-admin.js
 ```
 
 ### Running without Docker (development)
@@ -115,10 +119,17 @@ Requires Node.js ≥20 and a Postgres instance reachable via `DATABASE_URL`.
 
 ```bash
 npm install
+npm run build -w packages/owasp-content  # required once — apps/api imports its compiled
+                                          # output, not its raw TypeScript (see ADR 0002)
 npm run db:migrate:deploy -w apps/api
 npm run db:generate -w apps/api
 npm run db:seed -w apps/api
 npm run bootstrap:admin -w apps/api
-npm run start:dev -w apps/api   # API on :3000
+npm run start:dev -w apps/api   # API on :3000, routes under /api
 npm run dev -w apps/web         # Web on :5173 (another terminal)
 ```
+
+Here the api (`:3000`) and web dev server (`:5173`) are different origins, so
+`apps/web`'s `VITE_API_URL` needs the full URL (`.env.example` already sets
+`http://localhost:3000/api`) — unlike the single Docker image, which serves both from
+the same origin and doesn't need it (see [ADR 0002](docs/adr/0002-single-docker-image.md)).

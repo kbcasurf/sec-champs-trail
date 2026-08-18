@@ -14,6 +14,7 @@ describe("ActionPlans (e2e)", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
@@ -52,26 +53,26 @@ describe("ActionPlans (e2e)", () => {
 
   it("generating a plan without an assessment returns 400", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "action-plans-champion@example.com", password: "correct-horse" }).expect(200);
-    await agent.post(`/teams/${teamId}/action-plans`).expect(400);
+    await agent.post("/api/auth/login").send({ email: "action-plans-champion@example.com", password: "correct-horse" }).expect(200);
+    await agent.post(`/api/teams/${teamId}/action-plans`).expect(400);
   });
 
   it("regenerating a plan preserves checklist progress already marked", async () => {
     const agent = request.agent(app.getHttpServer());
-    await agent.post("/auth/login").send({ email: "action-plans-champion@example.com", password: "correct-horse" }).expect(200);
+    await agent.post("/api/auth/login").send({ email: "action-plans-champion@example.com", password: "correct-horse" }).expect(200);
 
-    const principles = await agent.get("/principles").expect(200);
+    const principles = await agent.get("/api/principles").expect(200);
     const scores = principles.body.map((p: { id: string }, i: number) => ({ principleId: p.id, score: i % 5 }));
-    await agent.post(`/teams/${teamId}/assessments`).send({ scores }).expect(201);
+    await agent.post(`/api/teams/${teamId}/assessments`).send({ scores }).expect(201);
 
-    await agent.post(`/teams/${teamId}/action-plans`).expect(201);
-    const firstPlan = await agent.get(`/teams/${teamId}/action-plans/latest`).expect(200);
+    await agent.post(`/api/teams/${teamId}/action-plans`).expect(201);
+    const firstPlan = await agent.get(`/api/teams/${teamId}/action-plans/latest`).expect(200);
     const someItemId = firstPlan.body.actionItems[0].checklistItemId;
 
-    await agent.patch(`/teams/${teamId}/checklist-progress/${someItemId}`).send({ status: "done" }).expect(200);
+    await agent.patch(`/api/teams/${teamId}/checklist-progress/${someItemId}`).send({ status: "done" }).expect(200);
 
-    await agent.post(`/teams/${teamId}/action-plans`).expect(201);
-    const secondPlan = await agent.get(`/teams/${teamId}/action-plans/latest`).expect(200);
+    await agent.post(`/api/teams/${teamId}/action-plans`).expect(201);
+    const secondPlan = await agent.get(`/api/teams/${teamId}/action-plans/latest`).expect(200);
     const sameItemInSecondPlan = secondPlan.body.actionItems.find(
       (i: { checklistItemId: string }) => i.checklistItemId === someItemId,
     );
