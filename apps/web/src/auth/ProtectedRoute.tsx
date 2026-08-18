@@ -1,4 +1,5 @@
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { apiFetch } from "../lib/api";
 
@@ -52,6 +53,7 @@ const NAV_LINKS: { to: string; label: string; adminOnly?: boolean }[] = [
 export function ProtectedRoute() {
   const { user, loading, setUser } = useAuth();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (loading) return <p className="p-6 font-mono text-sm text-ink-muted">Loading...</p>;
   if (!user) return <Navigate to="/login" replace />;
@@ -61,53 +63,78 @@ export function ProtectedRoute() {
     setUser(null);
   }
 
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
     <div className="min-h-screen bg-bg">
-      <header className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-line bg-bg-elevated px-4 py-3 sm:px-7">
-        <div className="flex items-center gap-2.5">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <polygon points="12,2 20,7 20,17 12,22 4,17 4,7" stroke="#f97316" strokeWidth="1.6" />
-            <circle cx="12" cy="12" r="1.6" fill="#f97316" />
-          </svg>
-          <span className="font-display text-[17px] font-bold tracking-tight text-ink">
-            Champion<span className="text-accent">Forge</span>
-          </span>
-        </div>
-        <nav className="flex flex-1 flex-wrap items-center gap-1">
-          {NAV_LINKS.filter((l) => !l.adminOnly || user.role === "admin").map((l) => {
-            const active = location.pathname === l.to;
-            return (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={`flex items-center gap-1.5 rounded-md border px-3 py-2 font-mono text-xs font-medium uppercase tracking-wide ${
-                  active
-                    ? "border-accent-border bg-accent-soft text-accent"
-                    : "border-transparent text-ink-muted hover:bg-surface-hover hover:text-ink"
-                }`}
-              >
-                {NAV_ICONS[l.to]}
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex items-center gap-3.5">
-          <span className="rounded border border-accent-border bg-accent-soft px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-accent">
-            {user.role}
-          </span>
-          <span className="font-mono text-xs text-ink-body">{user.email}</span>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 font-mono text-xs text-ink-muted hover:border-ink-muted-2 hover:bg-surface-hover hover:text-ink"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4" />
-              <path d="M16 17l5-5-5-5" />
-              <path d="M21 12H9" />
+      <header className="border-b border-line bg-bg-elevated px-4 py-3 sm:px-7">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <polygon points="12,2 20,7 20,17 12,22 4,17 4,7" stroke="#f97316" strokeWidth="1.6" />
+              <circle cx="12" cy="12" r="1.6" fill="#f97316" />
             </svg>
-            Log out
+            <span className="font-display text-[17px] font-bold tracking-tight text-ink">
+              Champion<span className="text-accent">Forge</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            className="flex items-center justify-center rounded-md border border-line p-2 text-ink-muted hover:border-ink-muted-2 hover:text-ink md:hidden"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              {menuOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
           </button>
+          <div
+            className={`${menuOpen ? "flex" : "hidden"} w-full flex-col gap-3 md:flex md:w-auto md:flex-1 md:flex-row md:items-center md:gap-x-8 md:gap-y-3`}
+          >
+            <nav className="flex flex-col gap-1 md:flex-1 md:flex-row md:flex-wrap md:items-center">
+              {NAV_LINKS.filter((l) => !l.adminOnly || user.role === "admin").map((l) => {
+                const active = location.pathname === l.to;
+                return (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    onClick={closeMenu}
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-2 font-mono text-xs font-medium uppercase tracking-wide ${
+                      active
+                        ? "border-accent-border bg-accent-soft text-accent"
+                        : "border-transparent text-ink-muted hover:bg-surface-hover hover:text-ink"
+                    }`}
+                  >
+                    {NAV_ICONS[l.to]}
+                    {l.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="flex flex-wrap items-center gap-3.5 border-t border-line pt-3 md:border-t-0 md:pt-0">
+              <span className="rounded border border-accent-border bg-accent-soft px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-accent">
+                {user.role}
+              </span>
+              <span className="font-mono text-xs text-ink-body">{user.email}</span>
+              <button
+                onClick={() => {
+                  closeMenu();
+                  handleLogout();
+                }}
+                className="flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 font-mono text-xs text-ink-muted hover:border-ink-muted-2 hover:bg-surface-hover hover:text-ink"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4" />
+                  <path d="M16 17l5-5-5-5" />
+                  <path d="M21 12H9" />
+                </svg>
+                Log out
+              </button>
+            </div>
+          </div>
         </div>
       </header>
       <Outlet />

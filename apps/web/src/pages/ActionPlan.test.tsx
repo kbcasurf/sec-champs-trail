@@ -144,6 +144,7 @@ describe("ActionPlan page", () => {
     const select = await screen.findByRole("combobox");
     const generateButton = screen.getByRole("button", { name: /generate new plan/i });
     expect(generateButton).toBeDisabled();
+    expect(screen.getByText(/pick a team from the dropdown above/i)).toBeInTheDocument();
 
     fireEvent.change(select, { target: { value: "team-1" } });
 

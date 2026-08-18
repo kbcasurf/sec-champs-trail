@@ -67,4 +67,17 @@ describe("TeamsAdmin page", () => {
       );
     });
   });
+
+  it("shows an empty state in the right column before a team is selected", async () => {
+    mockFetch();
+    render(
+      <AuthProvider>
+        <TeamsAdmin />
+      </AuthProvider>,
+    );
+
+    await screen.findByRole("button", { name: "Payments" });
+    expect(screen.getByText(/select a team/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+  });
 });

@@ -2,6 +2,24 @@ import { useEffect, useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
+import { EmptyState } from "../components/EmptyState";
+
+export function wrapLabel(text: string, maxCharsPerLine = 18): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxCharsPerLine) {
+      current = candidate;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
 
 interface AxisTickProps {
   x?: number;
@@ -11,9 +29,16 @@ interface AxisTickProps {
 }
 
 function AxisTick({ x, y, payload, textAnchor }: AxisTickProps) {
+  const lines = wrapLabel(payload?.value ?? "");
+  const lineHeight = 12;
+  const startDy = -((lines.length - 1) / 2) * lineHeight;
   return (
     <text x={x} y={y} textAnchor={textAnchor} fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontSize={10.5} fill="#7d8798">
-      {payload?.value}
+      {lines.map((line, i) => (
+        <tspan key={line} x={x} dy={i === 0 ? startDy : lineHeight}>
+          {line}
+        </tspan>
+      ))}
     </text>
   );
 }
@@ -134,13 +159,24 @@ export function Dashboard() {
         </div>
       )}
 
+      {!error && !scores && user?.role === "admin" && !teamId && (
+        <EmptyState
+          title="Select a team to view its maturity dashboard"
+          description="Pick a team from the dropdown above to see its radar chart and score breakdown."
+        />
+      )}
+
       {scores && (
         <div className="grid grid-cols-[1.3fr_0.9fr] gap-5">
           <div className="rounded-2xl border border-line bg-surface p-6">
             <h2 className="mb-1 font-display text-[15px] font-semibold text-ink">Maturity radar</h2>
             <p className="mb-2 font-body text-xs text-ink-muted">Most recent submission</p>
-            <ResponsiveContainer width="100%" height={400}>
-              <RadarChart data={scores.map((s) => ({ principle: s.principle.title, score: s.score }))} outerRadius="70%">
+            <ResponsiveContainer width="100%" height={420}>
+              <RadarChart
+                data={scores.map((s) => ({ principle: s.principle.title, score: s.score }))}
+                outerRadius="60%"
+                margin={{ top: 28, right: 84, bottom: 28, left: 84 }}
+              >
                 <PolarGrid stroke="#232a34" />
                 <PolarAngleAxis dataKey="principle" tick={<AxisTick />} />
                 <PolarRadiusAxis domain={[0, 4]} axisLine={false} tick={false} />

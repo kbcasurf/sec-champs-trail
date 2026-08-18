@@ -22,6 +22,7 @@ function renderProtected(initialUser: unknown) {
           <Route path="/login" element={<p>login page</p>} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<p>dashboard content</p>} />
+            <Route path="/checklist" element={<p>checklist content</p>} />
           </Route>
         </Routes>
       </AuthProvider>
@@ -47,5 +48,35 @@ describe("ProtectedRoute", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /log out/i }));
     await waitFor(() => expect(screen.getByText("login page")).toBeInTheDocument());
+  });
+
+  it("toggles the mobile menu open state when the hamburger button is clicked", async () => {
+    renderProtected({ id: "1", email: "captain@example.com", role: "admin", teamId: null });
+    await waitFor(() => expect(screen.getByText("dashboard content")).toBeInTheDocument());
+
+    const toggle = screen.getByRole("button", { name: /open menu/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /close menu/i })).toBe(toggle);
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /open menu/i })).toBe(toggle);
+  });
+
+  it("closes the mobile menu when a nav link is clicked", async () => {
+    renderProtected({ id: "1", email: "captain@example.com", role: "admin", teamId: null });
+    await waitFor(() => expect(screen.getByText("dashboard content")).toBeInTheDocument());
+
+    const toggle = screen.getByRole("button", { name: /open menu/i });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("link", { name: /checklist/i }));
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /open menu/i })).toBe(toggle);
   });
 });

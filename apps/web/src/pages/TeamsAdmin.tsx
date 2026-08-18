@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
+import { EmptyState } from "../components/EmptyState";
 
 interface Team {
   id: string;
@@ -124,7 +125,7 @@ export function TeamsAdmin() {
           </div>
         </div>
 
-        {selected && (
+        {selected ? (
           <div className="rounded-2xl border border-line bg-surface p-5.5">
             <h2 className="mb-4.5 font-display text-[17px] font-bold text-ink">{selected.name}</h2>
 
@@ -185,6 +186,11 @@ export function TeamsAdmin() {
               </button>
             </form>
           </div>
+        ) : (
+          <EmptyState
+            title="Select a team to view its champions"
+            description="Pick a team from the list on the left, or create a new one above it."
+          />
         )}
       </div>
     </div>

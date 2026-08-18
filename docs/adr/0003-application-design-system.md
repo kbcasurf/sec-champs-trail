@@ -156,3 +156,52 @@ redesign above. All four are fixed in this same change set; 20/20 frontend tests
   on `html`, plus explicit `::-webkit-scrollbar` styling (Chrome/Edge) and
   `scrollbar-color` (Firefox) using the existing `line`/`bg` tokens, so the scrollbar
   is always visible and on-theme rather than left to per-platform defaults.
+
+## Amendment 2 — `/hm-designer` design QA fixes (2026-08-18)
+
+A second QA pass, this time against the design *quality* bar (not just functional
+correctness) rather than a fresh runtime walkthrough, found 4 further defects plus one
+polish improvement. Full analysis in
+`docs/superpowers/specs/2026-08-18-ui-design-qa-fixes-design.md`; implemented via
+`docs/superpowers/plans/2026-08-18-ui-design-qa-fixes.md`.
+
+- **Radar chart principle labels were cropped mid-word.** `Dashboard.tsx`'s `AxisTick`
+  rendered each label as a single-line SVG `<text>`; the longest principle title ("Start
+  with a clear vision for your program") overflowed the card and was clipped to "...your
+  prog". Fixed with a new exported `wrapLabel()` greedy word-wrap helper (never splits a
+  word) rendering up to 3 `<tspan>` lines, plus increased `RadarChart` margin/reduced
+  `outerRadius` to give the wrapped labels room.
+- **The sticky "Submit assessment" bar had an invisible scrim.**
+  `AssessmentForm.tsx`'s sticky footer used `bg-gradient-to-t from-bg from-60%` — `from-bg`
+  is the exact same color as the page's own background, so the "gradient" never produced
+  any visible separation from content scrolling underneath. Fixed by replacing it with
+  `border-t border-line bg-bg/95 backdrop-blur`, giving the bar an actual visible seam and
+  a translucent, blurred panel.
+- **"No team selected" was a blank rectangle, not a designed state.** `Dashboard`,
+  `ChecklistLibrary`, `ActionPlan` (main content) and `TeamsAdmin` (right column) all had
+  render branches for the error and loaded-data cases, but none for the initial
+  `teamId === null` state an admin sees before picking a team from the selector. Fixed
+  with a new shared `EmptyState` component (`apps/web/src/components/EmptyState.tsx`,
+  reusing the same hexagon brand mark as the header/login), used in all 4 places.
+- **No favicon.** `apps/web/index.html` had no `<link rel="icon">` and there was no
+  `apps/web/public/` directory, causing a 404 on every page load. Fixed with a new
+  `apps/web/public/favicon.svg` reusing the existing hexagon brand mark, referenced from
+  `index.html`.
+- **Mobile header hamburger menu (polish, not a regression fix).** The first amendment's
+  `flex-wrap` fix eliminated horizontal overflow but still let nav links, role badge,
+  email, and log-out stack into ~230px of header height on narrow viewports.
+  `ProtectedRoute.tsx` now collapses that content behind a hamburger toggle below the `md`
+  breakpoint, reusing the same nav/user-info DOM (not a duplicate) so the desktop
+  appearance is unaffected. The header's full-body rewrite for this change initially
+  dropped the first amendment's `flex-wrap` class on the outer header container,
+  reintroducing horizontal overflow at mobile widths when the menu was open — caught in
+  final review and fixed by restoring `flex-wrap`. `ProtectedRoute.test.tsx` did not cover
+  the new `menuOpen` state, hamburger toggle, or auto-close-on-navigate behavior when this
+  amendment was first written; coverage for the toggle's `aria-expanded`/`aria-label`
+  state and the auto-close-on-navigate behavior was added afterward.
+
+Tested via `npm run test -w apps/web` (all pre-existing tests plus new/extended cases for
+`EmptyState`, `wrapLabel`, the 4 empty-state usages, and the mobile menu's toggle/auto-close
+behavior), `tsc -b`, and `eslint apps/web/src`. No manual browser walkthrough at 390×844 was
+performed as part of this review pass; verification of the mobile-width fix rests on the
+restored `flex-wrap` class and the automated test coverage above, not a visual check.

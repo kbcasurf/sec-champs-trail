@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
+import { EmptyState } from "../components/EmptyState";
 
 interface ChecklistItemView {
   id: string;
@@ -133,6 +134,12 @@ export function ChecklistLibrary() {
         <p role="alert" className="mb-4 font-body text-[12.5px] text-danger">
           {error}
         </p>
+      )}
+      {!error && !teamId && user?.role === "admin" && (
+        <EmptyState
+          title="Select a team to view its checklist progress"
+          description="Pick a team from the dropdown above to see recruitment and retention checklist items."
+        />
       )}
       {PHASES.map((phase) => {
         const itemsInPhase = items.filter((i) => i.phase === phase);

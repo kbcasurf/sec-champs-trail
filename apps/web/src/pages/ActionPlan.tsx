@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
+import { EmptyState } from "../components/EmptyState";
 
 type Bucket = "three_months" | "six_months" | "twelve_months";
 
@@ -160,6 +161,13 @@ export function ActionPlanPage() {
         <p role="alert" className="mb-4 rounded-2xl border border-line bg-surface p-16 text-center font-body text-[13.5px] text-ink-body">
           {error}
         </p>
+      )}
+
+      {!error && !plan && !teamId && user?.role === "admin" && (
+        <EmptyState
+          title="Select a team to view its action plan"
+          description="Pick a team from the dropdown above, then generate a plan from its latest assessment."
+        />
       )}
 
       {plan && (
