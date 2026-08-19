@@ -86,3 +86,9 @@ setting.
   react-router advisory it would have been lowered to catch isn't actually closed by the
   `^6.30.6` bump. The gap stays open and tracked as backlog above rather than being papered
   over with a weaker CI gate.
+- CI's `dast` job (ZAP baseline scan on `127.0.0.1:3000`) now runs against an app protected
+  by the global 100 req/min/IP rate limiter. A baseline spider and passive scan can plausibly
+  exceed that threshold from a single IP, which would silently reduce scan coverage (the job
+  only fails on high/critical ZAP findings, not on elevated 429 response rates). Accepted as a
+  known trade-off for now and not fixed in this pass — a future pass could add an env-gated
+  throttle bypass scoped to the `dast` CI job specifically if coverage proves insufficient.
