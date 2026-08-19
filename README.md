@@ -155,10 +155,20 @@ docker compose exec app node dist/src/bootstrap/bootstrap-admin.js
 
 `docker-compose.https.yml` runs the same stack behind a local Caddy reverse proxy on
 ports 80/443, terminating TLS with Caddy's own internal certificate authority — modeled
-on [threat-dragon-ai's Caddy setup][td-caddy]. This is the only way to actually exercise
-the app's `Secure` cookie flag and `Strict-Transport-Security` header locally (the default
-`docker-compose.yml` serves plain HTTP, so `NODE_ENV` stays unset and both stay off — see
-`.env.example`).
+on [threat-dragon-ai's Caddy setup][td-caddy]. This is the way to exercise these headers
+over real TLS in a browser — the default `docker-compose.yml` stack already sends the
+`Secure` cookie flag and HSTS header (the production Docker image always runs with
+`NODE_ENV=production`), but only a real HTTPS connection lets a browser actually honor
+them; over plain HTTP, `Secure` cookies and `upgrade-insecure-requests` only work at all
+because browsers make a `localhost`-specific exception.
+
+This stack also sets `TRUST_PROXY_HOPS=1` (see `.env.example`), because Caddy sits in
+front of the app as a single reverse-proxy hop. The same rule applies to any real
+deployment: when the app runs behind a reverse proxy, set `TRUST_PROXY_HOPS` to the
+exact number of proxy hops in front of it — never guess high, and never set it without
+an actual proxy there, since either mistake lets a client spoof `X-Forwarded-For` to
+rewrite its own rate-limit identity. Leave it unset (the default) whenever the app is
+reachable directly, with no proxy in front.
 
 ```bash
 docker compose -f docker-compose.https.yml up --build
