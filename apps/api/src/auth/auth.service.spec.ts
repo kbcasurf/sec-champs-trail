@@ -1,7 +1,15 @@
 import { JwtService } from "@nestjs/jwt";
+import { PrismaService } from "../prisma/prisma.service";
+
+const realBcrypt = jest.requireActual("bcrypt");
+
+jest.mock("bcrypt", () => ({
+  compare: jest.fn(realBcrypt.compare),
+  hashSync: jest.fn(realBcrypt.hashSync),
+}));
+
 import * as bcrypt from "bcrypt";
 import { AuthService } from "./auth.service";
-import { PrismaService } from "../prisma/prisma.service";
 
 describe("AuthService", () => {
   const champion = {
@@ -41,18 +49,13 @@ describe("AuthService", () => {
   });
 
   it("still runs a bcrypt comparison when no champion has that email (timing-safe)", async () => {
+    const compareSpy = jest.spyOn(bcrypt, "compare");
     (prisma.champion.findUnique as jest.Mock).mockResolvedValue(null);
 
-    // Track if bcrypt.compare is called by measuring response time
-    const startTime = Date.now();
-    const result = await service.validateCredentials("nobody@example.com", "anything");
-    const duration = Date.now() - startTime;
+    await service.validateCredentials("nobody@example.com", "anything");
 
-    // bcrypt.compare takes significant time (at least a few ms)
-    // If it's not called, duration will be ~0ms
-    // If it's called, duration will be at least 10-50ms
-    expect(result).toBeNull();
-    expect(duration).toBeGreaterThan(5);
+    expect(compareSpy).toHaveBeenCalledTimes(1);
+    compareSpy.mockRestore();
   });
 
   it("issues a JWT containing the champion's id, email, role and teamId", () => {
