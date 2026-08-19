@@ -3,7 +3,7 @@ import { validateEnv } from "./env.validation";
 describe("validateEnv", () => {
   const validEnv = {
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
-    JWT_SECRET: "a-secret-that-is-long-enough",
+    JWT_SECRET: "a-secret-that-is-at-least-32-characters-long",
     WEB_ORIGIN: "http://localhost:5173",
   };
 
@@ -23,8 +23,12 @@ describe("validateEnv", () => {
     expect(() => validateEnv(rest)).toThrow(/JWT_SECRET/);
   });
 
-  it("throws when JWT_SECRET is shorter than 16 characters", () => {
-    expect(() => validateEnv({ ...validEnv, JWT_SECRET: "short" })).toThrow(/JWT_SECRET/);
+  it("throws when JWT_SECRET is shorter than 32 characters", () => {
+    expect(() => validateEnv({ ...validEnv, JWT_SECRET: "a".repeat(31) })).toThrow(/JWT_SECRET/);
+  });
+
+  it("does not throw when JWT_SECRET is exactly 32 characters", () => {
+    expect(() => validateEnv({ ...validEnv, JWT_SECRET: "a".repeat(32) })).not.toThrow();
   });
 
   it("throws when WEB_ORIGIN is missing", () => {

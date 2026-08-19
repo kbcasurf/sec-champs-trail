@@ -92,7 +92,8 @@ consequences are recorded in
    cp .env.example .env
    ```
 
-   At minimum, set `JWT_SECRET` (16+ characters, no default value) and `ADMIN_EMAIL`,
+   At minimum, set `JWT_SECRET` (32+ characters, no default value — generate one with
+   `openssl rand -base64 32`) and `ADMIN_EMAIL`,
    `ADMIN_PASSWORD`, `ORGANIZATION_NAME` (used to bootstrap the first admin in step 3).
    `WEB_ORIGIN` already comes pre-filled with `http://localhost:3000`, the app's own
    origin under Docker Compose (see [ADR 0002](docs/adr/0002-single-docker-image.md)) —

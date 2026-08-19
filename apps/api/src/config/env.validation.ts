@@ -9,7 +9,7 @@ export function validateEnv(env: NodeJS.ProcessEnv): void {
     throw new Error(`Missing required environment variable(s): ${missing.join(", ")}`);
   }
 
-  if (env.JWT_SECRET!.length < 16) {
-    throw new Error("JWT_SECRET must be at least 16 characters long");
+  if (env.JWT_SECRET!.length < 32) {
+    throw new Error("JWT_SECRET must be at least 32 characters long");
   }
 }
