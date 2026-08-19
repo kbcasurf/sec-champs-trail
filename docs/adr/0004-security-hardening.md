@@ -15,7 +15,7 @@ validation, and bootstrap code, cross-checked against what the existing CI secur
 (Semgrep, CodeQL, TruffleHog, ZAP baseline, `npm audit --audit-level=high`) already catch,
 to avoid duplicating coverage and to find the gaps between them.
 
-## Decision — close all 5 findings, track what can't be closed safely
+## Decision — close 4 of 5 findings, mitigate and track the 5th
 
 1. **Login timing side-channel** (`auth.service.ts`): fixed by always running a bcrypt
    comparison, against a dummy hash when no champion matches the email, instead of
