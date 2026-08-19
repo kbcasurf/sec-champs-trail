@@ -73,4 +73,19 @@ describe("Auth (e2e)", () => {
     await agent.post("/api/auth/logout").expect(200);
     await agent.get("/api/auth/me").expect(401);
   });
+
+  it("POST /api/auth/login enforces a rate limit after repeated failed attempts", async () => {
+    let sawTooManyRequests = false;
+    for (let i = 0; i < 20 && !sawTooManyRequests; i++) {
+      const res = await request(app.getHttpServer())
+        .post("/api/auth/login")
+        .send({ email: "captain@example.com", password: "wrong" });
+      if (res.status === 429) {
+        sawTooManyRequests = true;
+      } else {
+        expect(res.status).toBe(401);
+      }
+    }
+    expect(sawTooManyRequests).toBe(true);
+  });
 });
