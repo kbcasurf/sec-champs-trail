@@ -99,11 +99,25 @@ consequences are recorded in
    you only need to change it if you change that port.
 
 2. Bring up the stack (Postgres + app — api and web are a single image, see
-   [ADR 0002](docs/adr/0002-single-docker-image.md)):
+   [ADR 0002](docs/adr/0002-single-docker-image.md)). There are two ways to get the
+   `app` image, pick one:
 
-   ```bash
-   docker compose up --build -d
-   ```
+   - **Pull the pre-built image** from GitHub Container Registry (published
+     automatically on every push to `main`, see
+     [`.github/workflows/docker-build-push.yml`](.github/workflows/docker-build-push.yml)) —
+     fastest, no local build required:
+
+     ```bash
+     docker compose pull
+     docker compose up -d
+     ```
+
+   - **Build the image locally** from source — use this if you changed application
+     code and want to test it:
+
+     ```bash
+     docker compose up --build -d
+     ```
 
    The app runs the Prisma migrations and seeds the curated OWASP content
    (`Principle`/`ChecklistItem`/`PrincipleMaturityLevel`) automatically on boot.

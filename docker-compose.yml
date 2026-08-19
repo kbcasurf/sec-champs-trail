@@ -16,6 +16,7 @@ services:
       retries: 10
 
   app:
+    image: ghcr.io/kbcasurf/sec-champs-trail:latest
     build:
       context: .
       dockerfile: Dockerfile
