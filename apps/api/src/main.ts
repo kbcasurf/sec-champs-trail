@@ -4,6 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import type { Request, Response, NextFunction } from "express";
 import { AppModule } from "./app.module";
 import { validateEnv } from "./config/env.validation";
@@ -13,6 +14,23 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix("api");
   app.use(cookieParser());
+  app.use(
+    helmet({
+      // helmet's own defaults (style-src 'self' https: 'unsafe-inline', font-src 'self'
+      // https: data:, script-src 'self', connect-src via default-src 'self', etc.) already
+      // cover this app as-is: the Google Fonts stylesheet/font files load over https:, the
+      // Vite build has no inline scripts, and every fetch is same-origin (VITE_API_URL=/api).
+      // The one directive worth tightening beyond the default is frame-ancestors: this app
+      // has no legitimate reason to ever be framed, including by itself, so 'none' instead
+      // of helmet's default 'self'.
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          "frame-ancestors": ["'none'"],
+        },
+      },
+    }),
+  );
   app.enableCors({ origin: process.env.WEB_ORIGIN, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
