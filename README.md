@@ -151,6 +151,31 @@ docker compose up --build -d
 docker compose exec app node dist/src/bootstrap/bootstrap-admin.js
 ```
 
+### Local HTTPS (optional)
+
+`docker-compose.https.yml` runs the same stack behind a local Caddy reverse proxy on
+ports 80/443, terminating TLS with Caddy's own internal certificate authority — modeled
+on [threat-dragon-ai's Caddy setup][td-caddy]. This is the only way to actually exercise
+the app's `Secure` cookie flag and `Strict-Transport-Security` header locally (the default
+`docker-compose.yml` serves plain HTTP, so `NODE_ENV` stays unset and both stay off — see
+`.env.example`).
+
+```bash
+docker compose -f docker-compose.https.yml up --build
+```
+
+Then open `https://localhost`. The browser will show a certificate warning — Caddy can't
+install its internal CA into the host's trust store from inside a container, so this is
+expected, not a bug. Either click through the warning, or trust it properly:
+
+```bash
+docker compose -f docker-compose.https.yml exec caddy cat /data/caddy/pki/authorities/local/root.crt > /tmp/caddy-local-ca.crt
+```
+
+and import `/tmp/caddy-local-ca.crt` into your OS or browser's trust store.
+
+[td-caddy]: https://github.com/kbcasurf/threat-dragon-ai
+
 ### Running without Docker (development)
 
 Requires Node.js ≥20 and a Postgres instance reachable via `DATABASE_URL`.

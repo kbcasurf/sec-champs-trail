@@ -32,6 +32,16 @@ async function bootstrap() {
     }),
   );
   app.enableCors({ origin: process.env.WEB_ORIGIN, credentials: true });
+
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 0);
+  if (trustProxyHops > 0) {
+    // Trust exactly this many hops of X-Forwarded-* (1 for the bundled local Caddy in
+    // docker-compose.https.yml) -- never `true`, which would trust the entire header
+    // chain unconditionally and let a client spoof its own IP to dodge the rate limiting
+    // above. (See threat-dragon-ai's README for a real instance of that exact misconfiguration.)
+    app.set("trust proxy", trustProxyHops);
+  }
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // Serves the web app's build (see docs/adr/0002-single-docker-image.md). Plain

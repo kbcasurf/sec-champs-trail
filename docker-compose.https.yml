@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: champion
+      POSTGRES_PASSWORD: champion
+      POSTGRES_DB: championforge
+    volumes:
+      - championforge-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U champion"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://champion:champion@postgres:5432/championforge
+      JWT_SECRET: ${JWT_SECRET}
+      WEB_ORIGIN: https://localhost
+      NODE_ENV: production
+      TRUST_PROXY_HOPS: "1"
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  championforge-db:
+  caddy-data:
+  caddy-config:
