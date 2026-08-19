@@ -40,6 +40,21 @@ describe("AuthService", () => {
     expect(result).toBeNull();
   });
 
+  it("still runs a bcrypt comparison when no champion has that email (timing-safe)", async () => {
+    (prisma.champion.findUnique as jest.Mock).mockResolvedValue(null);
+
+    // Track if bcrypt.compare is called by measuring response time
+    const startTime = Date.now();
+    const result = await service.validateCredentials("nobody@example.com", "anything");
+    const duration = Date.now() - startTime;
+
+    // bcrypt.compare takes significant time (at least a few ms)
+    // If it's not called, duration will be ~0ms
+    // If it's called, duration will be at least 10-50ms
+    expect(result).toBeNull();
+    expect(duration).toBeGreaterThan(5);
+  });
+
   it("issues a JWT containing the champion's id, email, role and teamId", () => {
     const { accessToken } = service.issueToken(champion);
     const decoded = jwt.decode(accessToken) as Record<string, unknown>;
