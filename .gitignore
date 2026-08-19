@@ -6,3 +6,16 @@ build/
 coverage/
 .DS_Store
 apps/web/vite.config.ts.timestamp-*
+
+# Claude Code local session/runtime state (machine-specific, not shared config)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json
+.claude/routines/.state/
+.claude/worktrees/
+.claude/checkpoints/
+.claude/mailbox/
+.claude/agent-registry.json
+.claude/agent-memory-local
+.claude/first-run
+.claude/assistant-daemon-state.json
