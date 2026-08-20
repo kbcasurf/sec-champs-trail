@@ -32,8 +32,8 @@ describe("Training tracks (e2e)", () => {
     prisma = moduleRef.get(PrismaService);
 
     const organization = await prisma.organization.upsert({
-      where: { id: "org-training-track-test" },
-      create: { id: "org-training-track-test", name: "Training Track Test Org" },
+      where: { id: "org-default" },
+      create: { id: "org-default", name: "Default Organization" },
       update: {},
     });
     const team = await prisma.team.create({ data: { name: "Training Track E2E Team", organizationId: organization.id } });
@@ -115,8 +115,8 @@ describe("Training tracks without AI configured (e2e)", () => {
     prisma = moduleRef.get(PrismaService);
 
     const organization = await prisma.organization.upsert({
-      where: { id: "org-training-track-no-ai-test" },
-      create: { id: "org-training-track-no-ai-test", name: "Training Track No-AI Test Org" },
+      where: { id: "org-default" },
+      create: { id: "org-default", name: "Default Organization" },
       update: {},
     });
     const team = await prisma.team.create({ data: { name: "No-AI E2E Team", organizationId: organization.id } });
