@@ -82,7 +82,7 @@ function readConfig(env: NodeJS.ProcessEnv): AiConfig | null {
     format,
     model: env.AI_PROVIDER_MODEL ?? DEFAULT_MODELS[format],
     timeoutMs: Number(env.AI_PROVIDER_TIMEOUT_MS ?? 60_000),
-    maxTokens: Number(env.AI_PROVIDER_MAX_TOKENS ?? 4_000),
+    maxTokens: Number(env.AI_PROVIDER_MAX_TOKENS ?? 8_000),
   };
 }
 
