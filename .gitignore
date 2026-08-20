@@ -19,3 +19,4 @@ apps/web/vite.config.ts.timestamp-*
 .claude/agent-memory-local
 .claude/first-run
 .claude/assistant-daemon-state.json
+.worktrees/
