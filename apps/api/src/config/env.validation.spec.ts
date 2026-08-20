@@ -36,4 +36,18 @@ describe("validateEnv", () => {
     const { WEB_ORIGIN, ...rest } = validEnv;
     expect(() => validateEnv(rest)).toThrow(/WEB_ORIGIN/);
   });
+
+  it("throws when AI_PROVIDER_API_URL does not start with https://", () => {
+    expect(() => validateEnv({ ...validEnv, AI_PROVIDER_API_URL: "http://insecure.example.com" })).toThrow(
+      /AI_PROVIDER_API_URL/,
+    );
+  });
+
+  it("does not throw when AI_PROVIDER_API_URL starts with https://", () => {
+    expect(() => validateEnv({ ...validEnv, AI_PROVIDER_API_URL: "https://api.example.com" })).not.toThrow();
+  });
+
+  it("does not throw when AI_PROVIDER_API_URL is absent (AI features stay disabled)", () => {
+    expect(() => validateEnv(validEnv)).not.toThrow();
+  });
 });

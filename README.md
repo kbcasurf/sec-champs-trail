@@ -186,6 +186,18 @@ and import `/tmp/caddy-local-ca.crt` into your OS or browser's trust store.
 
 [td-caddy]: https://github.com/kbcasurf/threat-dragon-ai
 
+### AI-powered features (optional)
+
+Training Track Generator and Executive Report (see `docs/superpowers/specs/2026-08-19-fase1b-ai-layer-design.md`)
+require an AI provider API key. Without one, both features stay visible in the app but
+show a message instead of a generation form -- every other feature works exactly the
+same either way. To enable them, set `AI_PROVIDER_API_KEY` in `.env` (see
+`.env.example` for the full set of `AI_PROVIDER_*` variables, all optional beyond the
+key itself) and restart the stack. `AI_PROVIDER_API_URL`, if set, must start with
+`https://`. The app never calls out to an AI provider on its own -- only when a user
+explicitly clicks "Generate" after acknowledging the consent notice, and every
+AI-generated result is labeled as such in the UI.
+
 ### Running without Docker (development)
 
 Requires Node.js ≥20 and a Postgres instance reachable via `DATABASE_URL`.
