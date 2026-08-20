@@ -27,4 +27,21 @@ describe("extractJson", () => {
   it("returns null for an empty string", () => {
     expect(extractJson("")).toBeNull();
   });
+
+  it("parses a bare JSON object whose string value contains an inner code fence", () => {
+    const raw = JSON.stringify({
+      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
+    });
+    expect(extractJson(raw)).toEqual({
+      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
+    });
+  });
+
+  it("parses a ```json-fenced JSON object whose string value also contains an inner code fence", () => {
+    const payload = {
+      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
+    };
+    const raw = "```json\n" + JSON.stringify(payload) + "\n```";
+    expect(extractJson(raw)).toEqual(payload);
+  });
 });

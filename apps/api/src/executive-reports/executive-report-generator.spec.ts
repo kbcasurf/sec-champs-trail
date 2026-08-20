@@ -20,6 +20,16 @@ describe("buildExecutiveReportPrompt", () => {
     expect(userPrompt).toContain("Payments");
     expect(userPrompt).toContain("Champion Advocacy: 2/4");
     expect(userPrompt).toContain("40%");
+    expect(userPrompt).toContain("UNTRUSTED DATA");
+
+    // organizationName and teamName are DB-stored, admin-authored strings but still
+    // less controlled than the maturity-score data -- they must sit after the marker.
+    const untrustedMarkerIndex = userPrompt.indexOf("UNTRUSTED DATA");
+    const orgNameIndex = userPrompt.indexOf("Acme Corp");
+    const teamNameIndex = userPrompt.indexOf("Payments");
+    expect(untrustedMarkerIndex).toBeGreaterThan(-1);
+    expect(orgNameIndex).toBeGreaterThan(untrustedMarkerIndex);
+    expect(teamNameIndex).toBeGreaterThan(untrustedMarkerIndex);
   });
 
   it("handles an organization with no teams yet", () => {
@@ -41,5 +51,12 @@ describe("parseExecutiveReportResponse", () => {
   it("throws when the report field is an empty string", () => {
     const raw = JSON.stringify({ report: "   " });
     expect(() => parseExecutiveReportResponse(raw)).toThrow("AI response did not contain a valid report");
+  });
+
+  it("parses a report field that contains an inner code fence", () => {
+    const raw = JSON.stringify({
+      report: "# Executive summary\n```js\nconst risk = 'high';\n```\nAll teams reviewed.",
+    });
+    expect(parseExecutiveReportResponse(raw)).toBe("# Executive summary\n```js\nconst risk = 'high';\n```\nAll teams reviewed.");
   });
 });

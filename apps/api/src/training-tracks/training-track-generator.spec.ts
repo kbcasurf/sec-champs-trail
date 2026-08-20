@@ -17,6 +17,13 @@ describe("buildTrainingTrackPrompt", () => {
     expect(userPrompt).toContain("Champion Advocacy (score 1/4)");
     expect(userPrompt).toContain("Publish a champion newsletter");
     expect(userPrompt).toContain("UNTRUSTED DATA");
+
+    // techStack is free-text supplied directly by the requesting user, so it must sit
+    // after the UNTRUSTED DATA marker, not bare/unmarked earlier in the prompt.
+    const untrustedMarkerIndex = userPrompt.indexOf("UNTRUSTED DATA");
+    const techStackIndex = userPrompt.indexOf("Node.js, Express");
+    expect(untrustedMarkerIndex).toBeGreaterThan(-1);
+    expect(techStackIndex).toBeGreaterThan(untrustedMarkerIndex);
   });
 
   it("handles a team with no assessment or pending checklist items yet", () => {
@@ -66,5 +73,24 @@ describe("parseTrainingTrackResponse", () => {
   it("throws when every module is invalid", () => {
     const raw = JSON.stringify({ modules: [{ title: "" }] });
     expect(() => parseTrainingTrackResponse(raw)).toThrow("AI response contained no valid modules");
+  });
+
+  it("parses a module whose content contains an inner code fence", () => {
+    const raw = JSON.stringify({
+      modules: [
+        {
+          title: "Hands-on: SQL injection",
+          content: "## Exercise\nRun this query:\n```js\nconst q = \"SELECT * FROM users\";\n```\nNow try it.",
+        },
+      ],
+    });
+
+    expect(parseTrainingTrackResponse(raw)).toEqual([
+      {
+        order: 0,
+        title: "Hands-on: SQL injection",
+        content: "## Exercise\nRun this query:\n```js\nconst q = \"SELECT * FROM users\";\n```\nNow try it.",
+      },
+    ]);
   });
 });
