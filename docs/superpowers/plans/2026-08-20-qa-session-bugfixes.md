@@ -891,55 +891,59 @@ git commit -m "fix(api): repair raw control characters inside AI JSON string val
 ### Task 5: Add a loading indicator while an AI feature is generating
 
 **Problem:** Clicking "Generate track" (`/training-tracks`) or "Generate report"
-(`/executive-reports`) shows no visual feedback while the request is in flight. A real
+(`/executive-reports`) shows minimal visual feedback while the request is in flight. A real
 generation against the Anthropic API took roughly 15–35 seconds in this QA session
-(`AI_PROVIDER_TIMEOUT_MS` allows up to 120s). During that window the button still reads
-"Generate track" / "Generate report" and stays clickable — no spinner, no disabled state, no
-"Generating…" text anywhere on the page. A real user is likely to conclude the click didn't
-register and click again, firing a second, concurrent (and equally slow/costly) AI request.
+(`AI_PROVIDER_TIMEOUT_MS` allows up to 120s).
+
+**Ruling (preflight scan, 2026-08-20) — this task's scope is narrower than the original
+Finding #5 text above:** Both `apps/web/src/pages/TrainingTrack.tsx` and
+`apps/web/src/pages/ExecutiveReport.tsx` already have a `generating` state
+(`const [generating, setGenerating] = useState(false)`, set `true` at the top of
+`doGenerate()` and back to `false` at its end) already wired to
+`disabled={generating || ...}` on the button, with `disabled:cursor-not-allowed
+disabled:opacity-70` in its class list. So the button **is** already disabled and dimmed
+while generating, and a second click during generation **cannot** already fire a concurrent
+request — that part of the original finding does not hold against the current code. The one
+genuinely missing piece is that the button's **label text never changes** — it always reads
+"Generate track" / "Generate report", even while `generating` is `true`. This task is scoped
+to exactly that: swap the label while `generating` is `true`. Do not rename the existing
+`generating` state or restructure `doGenerate()` — reuse both as they are.
 
 **Files:**
-- Modify: `apps/web/src/pages/TrainingTrackPage.tsx`, `apps/web/src/pages/ExecutiveReportPage.tsx`
-  (verify exact filenames)
-- Test: extend each page's existing test file (verify exact filenames alongside the pages
-  above) — no new dependency, no new test file needed if one already exists per page.
+- Modify: `apps/web/src/pages/TrainingTrack.tsx`, `apps/web/src/pages/ExecutiveReport.tsx`
+- Test: extend `apps/web/src/pages/TrainingTrack.test.tsx` and
+  `apps/web/src/pages/ExecutiveReport.test.tsx` — both already exist, no new dependency, no
+  new test file needed.
 
 **Interfaces:** none new — purely local component state, no prop/API changes.
 
 - [ ] **Step 1: Write the failing tests**
 
-For each of `TrainingTrackPage` and `ExecutiveReportPage`, extend the existing test file (or
-create one following the same mocking pattern already used in the file, if one doesn't
-exist) with a test asserting: clicking the generate button disables it and swaps its label to
-the generating state while the mocked `fetch` promise for the generate call is unresolved,
-then returns to the normal enabled label once it resolves.
+In each of `apps/web/src/pages/TrainingTrack.test.tsx` and
+`apps/web/src/pages/ExecutiveReport.test.tsx`, following the mocking pattern already used in
+that file, add a test asserting: while the mocked `fetch` promise for the generate call is
+unresolved, the button's accessible name is `"Generating…"` (not `"Generate track"` /
+`"Generate report"`), and once it resolves the button's accessible name returns to the
+original label. (The disabled-state assertion for this same window is not new coverage to
+add here if the file already asserts it elsewhere — check first; this task only needs to add
+label coverage.)
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `npm run test -w apps/web -- TrainingTrackPage ExecutiveReportPage`
-Expected: FAIL on the new assertions — no loading state exists yet.
+Run: `npm run test -w apps/web -- TrainingTrack ExecutiveReport`
+Expected: FAIL on the new label assertions only.
 
 - [ ] **Step 3: Write minimal implementation**
 
-In both `apps/web/src/pages/TrainingTrackPage.tsx` and
-`apps/web/src/pages/ExecutiveReportPage.tsx`:
-
-1. Find the two page components (both already track *some* loading state for their initial
-   `GET` fetch on mount — reuse that same pattern for the generate action instead of
-   introducing a new one).
-2. In the "Generate track" / "Generate report" click handler, set an `isGenerating` (or
-   equivalent) state to `true` before calling the API, and back to `false` in a `finally`
-   block after the call resolves or rejects.
-3. While `isGenerating` is `true`:
-   - Disable the button (`disabled={isGenerating}`) so a second click can't fire a
-     concurrent request.
-   - Swap its label to a generating state, e.g. `"Generating…"` (keep the existing
-     `font-mono` / uppercase button styling — see `apps/web/src/pages/Login.tsx` for the
-     token names in use, per this plan's existing "Global Constraints" section above).
+In both `apps/web/src/pages/TrainingTrack.tsx` and `apps/web/src/pages/ExecutiveReport.tsx`,
+change the generate button's children from the static label string to a conditional:
+`{generating ? "Generating…" : "Generate track"}` (respectively `"Generate report"`). Keep
+the existing `disabled={generating || ...}` and class list exactly as they are — both already
+satisfy the disabled/dimmed part of this finding.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `npm run test -w apps/web -- TrainingTrackPage ExecutiveReportPage`
+Run: `npm run test -w apps/web -- TrainingTrack ExecutiveReport`
 Expected: PASS.
 
 - [ ] **Step 5: Run the full frontend suite to check for regressions**
@@ -956,7 +960,7 @@ during generation does not fire multiple requests (check the Network tab).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/web/src/pages/TrainingTrackPage.tsx apps/web/src/pages/ExecutiveReportPage.tsx
+git add apps/web/src/pages/TrainingTrack.tsx apps/web/src/pages/ExecutiveReport.tsx
 git commit -m "feat(web): show a generating state on the AI-generation buttons while a request is in flight"
 ```
 
@@ -986,8 +990,11 @@ in one sitting; it does not attempt to support Markdown syntax the prompts don't
 **Files:**
 - Create: `apps/web/src/components/Markdown.tsx`
 - Create: `apps/web/src/components/Markdown.test.tsx`
-- Modify: `apps/web/src/pages/TrainingTrackPage.tsx` (per-module `content` string)
-- Modify: `apps/web/src/pages/ExecutiveReportPage.tsx` (`report` string)
+- Modify: `apps/web/src/pages/TrainingTrack.tsx` (each `module.content` string, in the
+  `track.modules.map(...)` block)
+- Modify: `apps/web/src/pages/ExecutiveReport.tsx` (each `report.content` string, in the
+  `reports.map(...)` block — note the field is named `content` on `ExecutiveReportView`, not
+  `report`)
 
 **Interfaces:**
 - Produces: `Markdown` component, exported from `apps/web/src/components/Markdown.tsx`,
@@ -1120,10 +1127,14 @@ export function Markdown({ text }: { text: string }) {
 }
 ```
 
-Then in `apps/web/src/pages/TrainingTrackPage.tsx`, replace wherever a module's `content`
-string is rendered directly (e.g. inside a `<p>` or a raw text node) with
-`<Markdown text={module.content} />` (import `{ Markdown } from "../components/Markdown"`);
-same substitution in `apps/web/src/pages/ExecutiveReportPage.tsx` for the `report` string.
+Then in `apps/web/src/pages/TrainingTrack.tsx`, replace the existing
+`<pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{module.content}</pre>`
+with `<Markdown text={module.content} />` (import `{ Markdown } from "../components/Markdown"`
+— note the existing `<pre>` wrapper is what currently forces the raw-text rendering; remove
+it, `Markdown` supplies its own element-level styling). Same substitution in
+`apps/web/src/pages/ExecutiveReport.tsx`: replace
+`<pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{report.content}</pre>`
+with `<Markdown text={report.content} />`.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -1151,7 +1162,7 @@ raw string this task doesn't modify).
 - [ ] **Step 8: Commit**
 
 ```bash
-git add apps/web/src/components/Markdown.tsx apps/web/src/components/Markdown.test.tsx apps/web/src/pages/TrainingTrackPage.tsx apps/web/src/pages/ExecutiveReportPage.tsx
+git add apps/web/src/components/Markdown.tsx apps/web/src/components/Markdown.test.tsx apps/web/src/pages/TrainingTrack.tsx apps/web/src/pages/ExecutiveReport.tsx
 git commit -m "feat(web): render AI-generated Markdown as formatted content instead of raw text"
 ```
 
