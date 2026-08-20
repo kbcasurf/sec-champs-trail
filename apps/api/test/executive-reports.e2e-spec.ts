@@ -83,3 +83,52 @@ describe("Executive reports (e2e)", () => {
     await request(app.getHttpServer()).get("/api/executive-reports").set("Cookie", championCookie).expect(403);
   });
 });
+
+describe("Executive reports without AI configured (e2e)", () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let adminCookie: string;
+  const originalApiKey = process.env.AI_PROVIDER_API_KEY;
+
+  beforeAll(async () => {
+    delete process.env.AI_PROVIDER_API_KEY;
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api");
+    app.use(cookieParser());
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+    prisma = moduleRef.get(PrismaService);
+
+    await prisma.organization.upsert({
+      where: { id: "org-default" },
+      create: { id: "org-default", name: "Default Organization" },
+      update: {},
+    });
+
+    await prisma.champion.upsert({
+      where: { email: "no-ai-exec-report-admin@example.com" },
+      create: { email: "no-ai-exec-report-admin@example.com", passwordHash: await bcrypt.hash("correct-horse", 10), role: "admin" },
+      update: {},
+    });
+
+    const adminLogin = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({ email: "no-ai-exec-report-admin@example.com", password: "correct-horse" });
+    adminCookie = adminLogin.headers["set-cookie"][0];
+  });
+
+  afterAll(async () => {
+    if (originalApiKey === undefined) {
+      delete process.env.AI_PROVIDER_API_KEY;
+    } else {
+      process.env.AI_PROVIDER_API_KEY = originalApiKey;
+    }
+    await prisma.champion.deleteMany({ where: { email: "no-ai-exec-report-admin@example.com" } });
+    await app.close();
+  });
+
+  it("returns 403 when no AI provider is configured", async () => {
+    await request(app.getHttpServer()).post("/api/executive-reports").set("Cookie", adminCookie).expect(403);
+  });
+});

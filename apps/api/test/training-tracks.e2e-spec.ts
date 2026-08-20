@@ -135,7 +135,11 @@ describe("Training tracks without AI configured (e2e)", () => {
   });
 
   afterAll(async () => {
-    process.env.AI_PROVIDER_API_KEY = originalApiKey;
+    if (originalApiKey === undefined) {
+      delete process.env.AI_PROVIDER_API_KEY;
+    } else {
+      process.env.AI_PROVIDER_API_KEY = originalApiKey;
+    }
     await prisma.champion.deleteMany({ where: { email: "no-ai-tester@example.com" } });
     await prisma.team.delete({ where: { id: teamId } });
     await app.close();

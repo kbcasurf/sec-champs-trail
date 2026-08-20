@@ -34,7 +34,11 @@ describe("AI status (e2e)", () => {
   });
 
   afterAll(async () => {
-    process.env.AI_PROVIDER_API_KEY = originalApiKey;
+    if (originalApiKey === undefined) {
+      delete process.env.AI_PROVIDER_API_KEY;
+    } else {
+      process.env.AI_PROVIDER_API_KEY = originalApiKey;
+    }
     await prisma.champion.deleteMany({ where: { email: "ai-status-tester@example.com" } });
     await app.close();
   });
