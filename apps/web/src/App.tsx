@@ -11,6 +11,7 @@ import { ExecutiveReportPage } from "./pages/ExecutiveReport";
 import { TrainingTrackPrintPage } from "./pages/TrainingTrackPrint";
 import { ExecutiveReportPrintPage } from "./pages/ExecutiveReportPrint";
 import { TeamsAdmin } from "./pages/TeamsAdmin";
+import { NotFound } from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/executive-reports/:id/print" element={<ExecutiveReportPrintPage />} />
             <Route path="/teams" element={<TeamsAdmin />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
