@@ -20,3 +20,4 @@ apps/web/vite.config.ts.timestamp-*
 .claude/first-run
 .claude/assistant-daemon-state.json
 .worktrees/
+.superpowers/
