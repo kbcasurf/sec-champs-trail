@@ -566,3 +566,623 @@ git commit -m "fix(web): redirect champions away from admin-only routes instead 
       first assessment exists — both pre-existing, unrelated to this plan, not something to
       fix here).
 - [ ] Confirm `git log --oneline` on the branch shows 3 commits, one per task above.
+
+---
+
+## Follow-up QA verification session (2026-08-20, after Tasks 1–3 were implemented)
+
+**Context:** Tasks 1, 2, and 3 above were implemented and committed on branch
+`worktree-qa-session-bugfixes` (commits `693cf03`, `55c3416`, `5dacce0`, plus test commit
+`20dfed6` and this doc's own commit `e5a3ba9`). A follow-up manual QA pass was then run
+against a **Docker image rebuilt from this branch** (`docker compose -p sec-champs-trail up
+--build -d` from the worktree directory — **not** `main`, these fixes are not yet merged),
+against real Postgres data, real login flows (the existing admin, plus a freshly created
+`qa.champion@example.com` champion), and real Anthropic API calls, driven live in Chrome via
+browser automation (`claude-in-chrome`, not Playwright — the Playwright MCP browser profile
+was already locked by another concurrent Claude Code session) so results could be watched in
+real time.
+
+### What's already tested and confirmed working — do not redo this
+
+- **Task 1**: Training Track generation succeeded end-to-end against the real Anthropic API
+  (a real 7-module track, no `502`). Confirms the `content[0]` → find-the-`"text"`-block fix
+  works for the case it was written for.
+- **Task 2**: Unknown route (`/this-route-does-not-exist`) renders the "Page not found" page
+  with a working "Go to dashboard" link.
+- **Task 3**: A champion navigating directly to `/teams` or `/executive-reports` is
+  redirected to `/dashboard`; the admin UI never renders for them.
+- Full non-AI flows exercised without incident: admin login/logout, Teams admin (create
+  team, create champion), champion login, the 10-question maturity assessment (submission +
+  radar chart), Checklist Library (checkbox toggling persists via
+  `PATCH .../checklist-progress/:id`, `200`), Action Plan generation (correctly reflects
+  checklist progress), admin Dashboard team switcher, the executive-report print route
+  (`/executive-reports/:id/print`, reachable and correctly admin-gated — it invokes the
+  browser's native `window.print()`, which is expected print-page behavior, not a bug). No
+  browser console errors were observed anywhere in the session.
+- **New finding surfaced by this pass, not yet fixed — see below**: the AI features are
+  **still not fully reliable** even after Task 1, for a different reason than Task 1 fixed.
+
+### New Finding #4 (Critical, intermittent) — AI JSON parsing breaks on unescaped control characters, still causes 502s
+
+**Severity:** Critical — same user-facing symptom as the original Finding #1 (a `502` on
+"Generate report" / "Generate track"), but a **different root cause, not fixed by Task 1**.
+
+**Reproduction:** As admin, clicked "Generate report" on `/executive-reports` (org already
+had 2 teams with assessments). First attempt: **`502`**. `docker compose logs app` showed:
+
+```
+[ExecutiveReportsService] Failed to generate the executive report
+Error: AI response did not contain a valid report
+    at parseExecutiveReportResponse (.../executive-report-generator.js:37:15)
+```
+
+Clicking "Generate report" again immediately after, same data, same prompt: **succeeded**
+(`201`). This confirms the failure is non-deterministic, not a permanent regression from
+Task 1's change.
+
+**Confirmed root cause:** Reproduced directly against the real Anthropic API with `curl`,
+replaying the exact system/user prompt `buildExecutiveReportPrompt()` builds for this data.
+The response came back `200 OK`, `stop_reason: "end_turn"` (not truncated), with a `text`
+content block that looks like valid JSON at a glance — but `JSON.parse` fails on it:
+
+```
+Invalid control character at: line 1 column 2864 (char 2863)
+```
+
+Inspecting that byte offset shows the model wrote a **literal, unescaped newline character**
+inside the `"report"` string value (`...culture.\n- **Reward...` — an actual `0x0A` byte, not
+the two-character escape sequence `\n`), which is illegal inside a JSON string per the JSON
+spec. `apps/api/src/ai/extract-json.ts`'s `tryParse()` uses plain `JSON.parse`, which has
+zero tolerance for this.
+
+**Why Task 1 didn't fix this:** Task 1 fixed *which content block* `AiProviderService` reads
+(`content[0]` → the block with `type: "text"`). This is a *separate* bug, one step later in
+the pipeline: even once the correct text block is extracted, its content is not always
+strictly valid JSON, because the model is asked to embed long, free-form Markdown (a
+`report` field, or `modules[].content`) inside a JSON string, and it occasionally emits a raw
+control character instead of the escaped form.
+
+**Why this isn't Training-Track-specific or Executive-Report-specific:** Both
+`apps/api/src/training-tracks/training-track-generator.ts` and
+`apps/api/src/executive-reports/executive-report-generator.ts` call the same
+`extractJson()` from `apps/api/src/ai/extract-json.ts`, and both prompts ask for long
+Markdown inside a JSON string field. Training Track happened to succeed on its one and only
+attempt in this QA session purely by luck — it is equally exposed to this failure mode, just
+not caught failing in this specific session.
+
+**Brainstorming outcome (2026-08-20):** Ran `superpowers:brainstorming` with the user before
+writing any code, as required above. Four directions were weighed:
+
+- **(A) Chosen — a narrow, state-machine-based sanitizer** that walks the raw response
+  character by character and escapes only raw control bytes (`0x00`–`0x1F`) found *inside a
+  JSON string literal*, leaving everything else (including JSON's own structural whitespace)
+  untouched. It does not loosen structural validation — missing braces, missing commas, and
+  truncated JSON still fail exactly as today. No new dependency; lives entirely inside
+  `apps/api/src/ai/extract-json.ts`, so it transparently covers both generators and both
+  provider formats (OpenAI, Anthropic) through the one shared code path, with **no change**
+  to `AiProviderService`'s contract or `ai-provider.service.spec.ts`.
+- (B) Rejected for now — moving to native structured output (Anthropic `tool_use` /
+  OpenAI function calling / `response_format`) so the provider itself guarantees valid JSON,
+  eliminating client-side `JSON.parse` entirely. Genuinely the most robust long-term
+  direction, but it changes `AiProviderService.generate()`'s contract and duplicates
+  schema-handling logic across both adapters — a materially bigger change than this finding's
+  severity requires right now. Worth a dedicated future spec, not bundled here.
+- (C) Rejected — a generic third-party "JSON repair" library. Broader tolerance than the
+  confirmed defect needs, adds a new dependency to a security-adjacent parsing path, and a
+  parser that lenient risks masking a genuinely corrupted or manipulated response instead of
+  failing loudly.
+- (D) Rejected (for now) — an automatic one-shot retry on parse failure as a complementary
+  safety net. Treats the symptom, not the cause, and costs an extra real API call on every
+  occurrence. The user chose not to add this on top of (A); (A) alone is expected to close
+  the confirmed defect.
+
+Security framing: (A) was chosen specifically because it does not expand what the parser
+*accepts* in any general sense — it corrects one narrowly-defined, already-illegal byte
+sequence back to spec-compliant JSON, inside the exact code path both generators already
+share, without touching the untrusted-data fencing already in place in the two prompts
+(`<dados_do_time>` / `<dados_da_organizacao>`) or introducing a new dependency.
+
+### Task 4: Escape raw control characters inside JSON string values before parsing AI responses
+
+**Context:** See "New Finding #4" above for the full reproduction and root-cause analysis,
+and "Brainstorming outcome" immediately above for why this approach (and not one of the three
+rejected alternatives) was chosen. `apps/api/src/ai/extract-json.ts`'s `tryParse()` calls
+plain `JSON.parse`, which has zero tolerance for a raw, unescaped control character (e.g. a
+literal `0x0A` newline byte) inside a JSON string value — legal-looking Markdown content from
+the AI, illegal JSON. This is a single shared bug affecting both `TrainingTracksService` and
+`ExecutiveReportsService`, the same way Task 1 was, because both call the same
+`extractJson()`.
+
+**Files:**
+- Modify: `apps/api/src/ai/extract-json.ts`
+- Test: Create `apps/api/src/ai/extract-json.spec.ts` (does not exist yet — today this module
+  is only covered indirectly through the two generators' own spec files)
+
+**Interfaces:** none new — `extractJson<T>(raw: string): T | null`'s signature and behavior
+for already-valid JSON are unchanged; only its tolerance for one specific, illegal byte
+sequence inside string values changes.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `apps/api/src/ai/extract-json.spec.ts`:
+
+```ts
+import { extractJson } from "./extract-json";
+
+describe("extractJson", () => {
+  it("parses a bare JSON object with a properly-escaped newline", () => {
+    const raw = '{"report": "line one\\nline two"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "line one\nline two" });
+  });
+
+  it("repairs a literal unescaped newline inside a JSON string value (the confirmed Finding #4 defect)", () => {
+    // The template literal below embeds an ACTUAL newline byte (0x0A) inside
+    // the string value, not the two-character escape sequence -- this is
+    // exactly what plain JSON.parse rejects with an "invalid/bad control
+    // character" error, and what the real Anthropic response in Finding #4
+    // was shown (via curl, outside the app) to contain.
+    const raw = '{"report": "First paragraph.\n- Bullet one\n- Bullet two"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({
+      report: "First paragraph.\n- Bullet one\n- Bullet two",
+    });
+  });
+
+  it("repairs a literal unescaped tab and carriage return inside a string value", () => {
+    const raw = '{"content": "before\tafter\rend"}';
+    expect(extractJson<{ content: string }>(raw)).toEqual({ content: "before\tafter\rend" });
+  });
+
+  it("does not corrupt whitespace used as JSON structural formatting outside of strings", () => {
+    const raw = '{\n  "report": "one line, no control chars"\n}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "one line, no control chars" });
+  });
+
+  it("does not get confused by an escaped quote inside a string value that also has a raw newline", () => {
+    const raw = '{"report": "She said \\"hello\\".\nNext line."}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: 'She said "hello".\nNext line.' });
+  });
+
+  it("still returns null for structurally malformed JSON (missing closing brace)", () => {
+    const raw = '{"report": "unterminated';
+    expect(extractJson(raw)).toBeNull();
+  });
+
+  it("repairs a raw control character even when the JSON is wrapped in a fenced code block", () => {
+    const raw = '```json\n{"report": "line one\nline two"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "line one\nline two" });
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `npm run test -w apps/api -- extract-json`
+Expected: FAIL on the "repairs a literal unescaped ..." tests (plain `JSON.parse` rejects the
+raw control byte) — the "does not corrupt ..." and "still returns null ..." tests already pass
+against the current implementation, since they don't exercise the new behavior.
+
+- [ ] **Step 3: Write minimal implementation**
+
+In `apps/api/src/ai/extract-json.ts`, add (above `tryParse`):
+
+```ts
+const JSON_ESCAPES: Record<number, string> = {
+  0x08: "\\b",
+  0x09: "\\t",
+  0x0a: "\\n",
+  0x0c: "\\f",
+  0x0d: "\\r",
+};
+
+// AI responses occasionally embed a raw, unescaped control byte (most often
+// a literal newline) inside a JSON string value instead of its two-character
+// escape sequence -- illegal per the JSON spec, but not a structural error.
+// This repairs exactly that, and only inside string literals: it tracks
+// whether the scan is currently inside a JSON string (toggled on an
+// unescaped `"`) and whether the current character is itself the target of
+// a preceding backslash, so it never touches JSON's own structural
+// whitespace or double-escapes an already-valid sequence.
+function escapeRawControlChars(source: string): string {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const char of source) {
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+    const code = char.charCodeAt(0);
+    if (inString && code < 0x20) {
+      result += JSON_ESCAPES[code] ?? `\\u${code.toString(16).padStart(4, "0")}`;
+      continue;
+    }
+    result += char;
+  }
+
+  return result;
+}
+```
+
+Then replace:
+
+```ts
+function tryParse<T>(source: string): T | null {
+  try {
+    return JSON.parse(source) as T;
+  } catch {
+    return null;
+  }
+}
+```
+
+with:
+
+```ts
+function tryParse<T>(source: string): T | null {
+  try {
+    return JSON.parse(source) as T;
+  } catch {
+    // fall through -- retry once below after repairing raw control
+    // characters, before giving up.
+  }
+  try {
+    return JSON.parse(escapeRawControlChars(source)) as T;
+  } catch {
+    return null;
+  }
+}
+```
+
+(Trying the raw string first, and only paying for the character-by-character repair pass on
+failure, keeps the existing fast path unchanged for the common case where the AI already
+produced strictly valid JSON.)
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `npm run test -w apps/api -- extract-json`
+Expected: PASS (all new tests).
+
+- [ ] **Step 5: Run the full backend suite to check for regressions**
+
+Run: `npm run typecheck -w apps/api && npm run lint -w apps/api && npm run test -w apps/api`
+Expected: PASS, no regressions — in particular re-check that
+`training-track-generator`/`executive-report-generator`-related specs (if any exist) and
+`ai-provider.service.spec.ts` are unaffected, since this task doesn't touch either of those
+files.
+
+- [ ] **Step 6: Manual verification**
+
+```bash
+docker compose -p sec-champs-trail up --build -d
+```
+
+Then, reusing the existing QA data (`QA Test Team` / `qa.champion@example.com`, or create
+fresh data per `README.md` Quickstart):
+
+1. As admin, generate an Executive Report several times in a row (the defect is
+   intermittent — a handful of successes doesn't prove the fix on its own, the unit test
+   above is the authoritative check, but this builds live confidence). Expected: no `502`,
+   and `docker compose logs app` shows no
+   `Error: AI response did not contain a valid report`.
+2. As champion, generate a Training Track a couple of times. Expected: same — no `502`, no
+   `Error: AI response did not contain a valid modules array`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add apps/api/src/ai/extract-json.ts apps/api/src/ai/extract-json.spec.ts
+git commit -m "fix(api): repair raw control characters inside AI JSON string values before parsing"
+```
+
+---
+
+### Task 5: Add a loading indicator while an AI feature is generating
+
+**Problem:** Clicking "Generate track" (`/training-tracks`) or "Generate report"
+(`/executive-reports`) shows no visual feedback while the request is in flight. A real
+generation against the Anthropic API took roughly 15–35 seconds in this QA session
+(`AI_PROVIDER_TIMEOUT_MS` allows up to 120s). During that window the button still reads
+"Generate track" / "Generate report" and stays clickable — no spinner, no disabled state, no
+"Generating…" text anywhere on the page. A real user is likely to conclude the click didn't
+register and click again, firing a second, concurrent (and equally slow/costly) AI request.
+
+**Files:**
+- Modify: `apps/web/src/pages/TrainingTrackPage.tsx`, `apps/web/src/pages/ExecutiveReportPage.tsx`
+  (verify exact filenames)
+- Test: extend each page's existing test file (verify exact filenames alongside the pages
+  above) — no new dependency, no new test file needed if one already exists per page.
+
+**Interfaces:** none new — purely local component state, no prop/API changes.
+
+- [ ] **Step 1: Write the failing tests**
+
+For each of `TrainingTrackPage` and `ExecutiveReportPage`, extend the existing test file (or
+create one following the same mocking pattern already used in the file, if one doesn't
+exist) with a test asserting: clicking the generate button disables it and swaps its label to
+the generating state while the mocked `fetch` promise for the generate call is unresolved,
+then returns to the normal enabled label once it resolves.
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `npm run test -w apps/web -- TrainingTrackPage ExecutiveReportPage`
+Expected: FAIL on the new assertions — no loading state exists yet.
+
+- [ ] **Step 3: Write minimal implementation**
+
+In both `apps/web/src/pages/TrainingTrackPage.tsx` and
+`apps/web/src/pages/ExecutiveReportPage.tsx`:
+
+1. Find the two page components (both already track *some* loading state for their initial
+   `GET` fetch on mount — reuse that same pattern for the generate action instead of
+   introducing a new one).
+2. In the "Generate track" / "Generate report" click handler, set an `isGenerating` (or
+   equivalent) state to `true` before calling the API, and back to `false` in a `finally`
+   block after the call resolves or rejects.
+3. While `isGenerating` is `true`:
+   - Disable the button (`disabled={isGenerating}`) so a second click can't fire a
+     concurrent request.
+   - Swap its label to a generating state, e.g. `"Generating…"` (keep the existing
+     `font-mono` / uppercase button styling — see `apps/web/src/pages/Login.tsx` for the
+     token names in use, per this plan's existing "Global Constraints" section above).
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `npm run test -w apps/web -- TrainingTrackPage ExecutiveReportPage`
+Expected: PASS.
+
+- [ ] **Step 5: Run the full frontend suite to check for regressions**
+
+Run: `npm run test -w apps/web`
+Expected: PASS, no regressions.
+
+- [ ] **Step 6: Manual verification**
+
+With the stack running, click "Generate track" / "Generate report" and confirm the button
+visibly changes state for the duration of a real AI call, and that clicking it repeatedly
+during generation does not fire multiple requests (check the Network tab).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add apps/web/src/pages/TrainingTrackPage.tsx apps/web/src/pages/ExecutiveReportPage.tsx
+git commit -m "feat(web): show a generating state on the AI-generation buttons while a request is in flight"
+```
+
+(Include each page's test file in the `git add` above too.)
+
+---
+
+### Task 6: Render AI-generated Markdown as formatted content
+
+**Problem:** Both the Training Track and Executive Report pages display the AI's Markdown
+output (headings `##`, bold `**text**`, numbered lists, etc.) as literal, unrendered text in
+the browser — `## Overview` appears on screen exactly as those four characters, not as a
+heading. This makes the primary generated content harder to scan than it should be for a
+tool meant for daily AppSec use, even though the same content already exports correctly via
+the existing "Export Markdown" / "Export PDF" buttons (those clearly already understand it's
+Markdown).
+
+**Dependency decision (confirmed with the user, 2026-08-20):** `apps/web/package.json` has no
+Markdown-rendering dependency today. Rather than add one (e.g. `react-markdown`), the user
+chose a **hand-rolled minimal renderer, zero new dependencies** — scoped to exactly the
+Markdown subset the two prompts actually ask the model to produce (headings `#`/`##`/`###`,
+bold `**text**`, unordered lists `- `, ordered lists `1. `, plain paragraphs). This keeps
+`package.json`'s dependency surface unchanged and the rendering logic small enough to read
+in one sitting; it does not attempt to support Markdown syntax the prompts don't request
+(tables, images, links, nested lists, code fences).
+
+**Files:**
+- Create: `apps/web/src/components/Markdown.tsx`
+- Create: `apps/web/src/components/Markdown.test.tsx`
+- Modify: `apps/web/src/pages/TrainingTrackPage.tsx` (per-module `content` string)
+- Modify: `apps/web/src/pages/ExecutiveReportPage.tsx` (`report` string)
+
+**Interfaces:**
+- Produces: `Markdown` component, exported from `apps/web/src/components/Markdown.tsx`,
+  props `{ text: string }`, renders semantic HTML elements (`h1`–`h3`, `ul`/`ol`/`li`, `p`,
+  `strong`) — no raw HTML pass-through of any kind, since it never uses
+  `dangerouslySetInnerHTML`; every character of `text` either matches a recognized Markdown
+  token or is rendered as plain text content, which React escapes automatically. This is
+  what keeps this component safe even though its input is model-generated, not another
+  user's input — same reasoning as `Steps to fix` note below.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `apps/web/src/components/Markdown.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { Markdown } from "./Markdown";
+
+describe("Markdown", () => {
+  it("renders headings as heading elements, not literal '#' text", () => {
+    render(<Markdown text={"## Overview\n\nSome text."} />);
+    expect(screen.getByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();
+  });
+
+  it("renders bold text inside a strong element", () => {
+    render(<Markdown text="This is **important** context." />);
+    expect(screen.getByText("important").tagName).toBe("STRONG");
+  });
+
+  it("renders an unordered list as list items", () => {
+    render(<Markdown text={"- First item\n- Second item"} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("First item")).toBeInTheDocument();
+  });
+
+  it("renders an ordered list (e.g. a reinforcement quiz) as list items", () => {
+    render(<Markdown text={"1. What is XSS?\n2. What is CSRF?"} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("What is XSS?")).toBeInTheDocument();
+  });
+
+  it("does not interpret raw HTML in the input as markup", () => {
+    render(<Markdown text={"<img src=x onerror=alert(1)>"} />);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByText(/<img/)).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `npm run test -w apps/web -- Markdown`
+Expected: FAIL — `apps/web/src/components/Markdown.tsx` doesn't exist yet (import error).
+
+- [ ] **Step 3: Write minimal implementation**
+
+Create `apps/web/src/components/Markdown.tsx`:
+
+```tsx
+import type { ReactNode } from "react";
+
+function renderInline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part,
+  );
+}
+
+const LIST_ITEM = /^[-*] |^\d+\. /;
+
+export function Markdown({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const blocks: ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const heading = /^(#{1,3}) (.*)/.exec(line);
+
+    if (heading) {
+      const level = heading[1].length;
+      const Tag = (`h${level}` as unknown) as "h1" | "h2" | "h3";
+      const classes = level === 1 ? "font-display text-xl font-bold text-ink" : level === 2 ? "font-display text-lg font-bold text-ink" : "font-display text-base font-bold text-ink";
+      blocks.push(
+        <Tag key={key++} className={classes}>
+          {renderInline(heading[2])}
+        </Tag>,
+      );
+      i++;
+      continue;
+    }
+
+    if (/^[-*] /.test(line) || /^\d+\. /.test(line)) {
+      const ordered = /^\d+\. /.test(line);
+      const items: string[] = [];
+      while (i < lines.length && LIST_ITEM.test(lines[i])) {
+        items.push(lines[i].replace(ordered ? /^\d+\. / : /^[-*] /, ""));
+        i++;
+      }
+      const ListTag = ordered ? "ol" : "ul";
+      blocks.push(
+        <ListTag key={key++} className={`${ordered ? "list-decimal" : "list-disc"} space-y-1 pl-5 font-body text-[13px] text-ink`}>
+          {items.map((item, idx) => (
+            <li key={idx}>{renderInline(item)}</li>
+          ))}
+        </ListTag>,
+      );
+      continue;
+    }
+
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    const paragraphLines: string[] = [];
+    while (i < lines.length && lines[i].trim() !== "" && !/^(#{1,3} |[-*] |\d+\. )/.test(lines[i])) {
+      paragraphLines.push(lines[i]);
+      i++;
+    }
+    blocks.push(
+      <p key={key++} className="font-body text-[13px] text-ink-muted">
+        {renderInline(paragraphLines.join(" "))}
+      </p>,
+    );
+  }
+
+  return <>{blocks}</>;
+}
+```
+
+Then in `apps/web/src/pages/TrainingTrackPage.tsx`, replace wherever a module's `content`
+string is rendered directly (e.g. inside a `<p>` or a raw text node) with
+`<Markdown text={module.content} />` (import `{ Markdown } from "../components/Markdown"`);
+same substitution in `apps/web/src/pages/ExecutiveReportPage.tsx` for the `report` string.
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `npm run test -w apps/web -- Markdown`
+Expected: PASS (all 5 new tests, including the raw-HTML-is-not-markup one).
+
+- [ ] **Step 5: Extend the page-level tests**
+
+Add or extend one Testing Library test per page (`TrainingTrackPage`, `ExecutiveReportPage`)
+asserting a `##` line in the mocked API response renders as a heading element (not literal
+`##` text) after generation.
+
+- [ ] **Step 6: Run the full frontend suite to check for regressions**
+
+Run: `npm run test -w apps/web`
+Expected: PASS, no regressions.
+
+- [ ] **Step 7: Manual verification**
+
+With the stack running, generate a Training Track and an Executive Report and visually
+confirm headings, bold text, and lists render as formatted content, and that
+"Export Markdown" / "Export PDF" still produce correct, unchanged output (they read the same
+raw string this task doesn't modify).
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add apps/web/src/components/Markdown.tsx apps/web/src/components/Markdown.test.tsx apps/web/src/pages/TrainingTrackPage.tsx apps/web/src/pages/ExecutiveReportPage.tsx
+git commit -m "feat(web): render AI-generated Markdown as formatted content instead of raw text"
+```
+
+(Include each page's test file in the `git add` above too, if extended.)
+
+### Where to resume
+
+Tasks 1–3 are **done**: implemented, committed, and manually verified live against a real
+rebuilt image (see "What's already tested and confirmed working" above) — do not redo that
+work or re-litigate those three fixes. The branch `worktree-qa-session-bugfixes` (currently
+at commit `20dfed6` for code / `e5a3ba9` for this doc) already has everything needed to build
+and manually re-verify: `docker compose -p sec-champs-trail up --build -d` from the worktree
+directory reuses the existing `sec-champs-trail_championforge-db` volume, so prior test data
+(the `QA Test Team` / `qa.champion@example.com` champion created during this QA pass) is
+still there.
+
+**Status (2026-08-20, this session):** `superpowers:brainstorming` was run for Finding #4 as
+required; see "Brainstorming outcome" above for the four options weighed and why the chosen
+one doesn't expand the app's trust surface. Finding #4 is now written up as **Task 4** (full
+TDD steps, in the same format as Tasks 1–3). A second, small decision (whether Task 6 may add
+a Markdown-rendering npm dependency) was also confirmed with the user — see "Dependency
+decision" under Task 6 — and Findings #5/#6 are likewise now written up as **Task 5** and
+**Task 6** in the same checkbox format. Nothing has been implemented yet in this session.
+
+**Start the next session here:**
+
+1. Execute Task 4, Task 5, and Task 6 above via `superpowers:subagent-driven-development`, in
+   that order — Task 4 first regardless, since it's the only one of the three with real
+   functional (not cosmetic/UX) impact, and Tasks 5/6 both touch the same two page components
+   Task 4's fix makes reliable.
+2. Run this plan's "Final verification (after all 3 tasks)" checklist again against a fresh
+   rebuild once Tasks 4–6 are done, extended to also confirm: the executive report and
+   training track pages show a generating state during a real AI call (Task 5) and render
+   Markdown as formatted content, not raw text (Task 6).
