@@ -29,6 +29,12 @@ enum ActionBucket {
   twelve_months
 }
 
+enum ExperienceLevel {
+  beginner
+  intermediate
+  advanced
+}
+
 model Organization {
   id        String   @id @default(uuid())
   name      String
@@ -172,10 +178,13 @@ model ChecklistProgress {
 }
 
 model TrainingTrack {
-  id        String   @id @default(uuid())
-  teamId    String
-  team      Team     @relation(fields: [teamId], references: [id])
-  createdAt DateTime @default(now())
+  id              String          @id @default(uuid())
+  teamId          String
+  team            Team            @relation(fields: [teamId], references: [id])
+  createdAt       DateTime        @default(now())
+  techStack       String
+  experienceLevel ExperienceLevel
+  hoursPerWeek    Int
 
   modules TrainingModule[]
 

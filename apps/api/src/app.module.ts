@@ -11,6 +11,9 @@ import { ChecklistItemsModule } from "./checklist-items/checklist-items.module";
 import { AssessmentsModule } from "./assessments/assessments.module";
 import { ChecklistProgressModule } from "./checklist-progress/checklist-progress.module";
 import { ActionPlansModule } from "./action-plans/action-plans.module";
+import { AiModule } from "./ai/ai.module";
+import { TrainingTracksModule } from "./training-tracks/training-tracks.module";
+import { ExecutiveReportsModule } from "./executive-reports/executive-reports.module";
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { ActionPlansModule } from "./action-plans/action-plans.module";
     AssessmentsModule,
     ChecklistProgressModule,
     ActionPlansModule,
+    AiModule,
+    TrainingTracksModule,
+    ExecutiveReportsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
