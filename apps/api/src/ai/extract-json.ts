@@ -1,6 +1,60 @@
+const JSON_ESCAPES: Record<number, string> = {
+  0x08: "\\b",
+  0x09: "\\t",
+  0x0a: "\\n",
+  0x0c: "\\f",
+  0x0d: "\\r",
+};
+
+// AI responses occasionally embed a raw, unescaped control byte (most often
+// a literal newline) inside a JSON string value instead of its two-character
+// escape sequence -- illegal per the JSON spec, but not a structural error.
+// This repairs exactly that, and only inside string literals: it tracks
+// whether the scan is currently inside a JSON string (toggled on an
+// unescaped `"`) and whether the current character is itself the target of
+// a preceding backslash, so it never touches JSON's own structural
+// whitespace or double-escapes an already-valid sequence.
+function escapeRawControlChars(source: string): string {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const char of source) {
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+    const code = char.charCodeAt(0);
+    if (inString && code < 0x20) {
+      result += JSON_ESCAPES[code] ?? `\\u${code.toString(16).padStart(4, "0")}`;
+      continue;
+    }
+    result += char;
+  }
+
+  return result;
+}
+
 function tryParse<T>(source: string): T | null {
   try {
     return JSON.parse(source) as T;
+  } catch {
+    // fall through -- retry once below after repairing raw control
+    // characters, before giving up.
+  }
+  try {
+    return JSON.parse(escapeRawControlChars(source)) as T;
   } catch {
     return null;
   }
