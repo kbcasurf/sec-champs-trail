@@ -8,6 +8,8 @@ import { ChecklistLibrary } from "./pages/ChecklistLibrary";
 import { ActionPlanPage } from "./pages/ActionPlan";
 import { TrainingTrackPage } from "./pages/TrainingTrack";
 import { ExecutiveReportPage } from "./pages/ExecutiveReport";
+import { TrainingTrackPrintPage } from "./pages/TrainingTrackPrint";
+import { ExecutiveReportPrintPage } from "./pages/ExecutiveReportPrint";
 import { TeamsAdmin } from "./pages/TeamsAdmin";
 
 export default function App() {
@@ -24,6 +26,8 @@ export default function App() {
             <Route path="/action-plan" element={<ActionPlanPage />} />
             <Route path="/training-tracks" element={<TrainingTrackPage />} />
             <Route path="/executive-reports" element={<ExecutiveReportPage />} />
+            <Route path="/training-tracks/:id/print" element={<TrainingTrackPrintPage />} />
+            <Route path="/executive-reports/:id/print" element={<ExecutiveReportPrintPage />} />
             <Route path="/teams" element={<TeamsAdmin />} />
           </Route>
         </Routes>

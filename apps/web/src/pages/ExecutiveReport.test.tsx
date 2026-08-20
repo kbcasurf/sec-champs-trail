@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "../auth/AuthContext";
 import { ExecutiveReportPage } from "./ExecutiveReport";
 
@@ -32,9 +33,11 @@ describe("ExecutiveReport page", () => {
   it("shows the disabled banner when AI is not configured", async () => {
     mockFetch({ aiEnabled: false, reports: [] });
     render(
-      <AuthProvider>
-        <ExecutiveReportPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <ExecutiveReportPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     expect(await screen.findByText(/ai features are not configured/i)).toBeInTheDocument();
@@ -43,9 +46,11 @@ describe("ExecutiveReport page", () => {
   it("shows history when AI is configured", async () => {
     mockFetch({ aiEnabled: true, reports: [REPORT] });
     render(
-      <AuthProvider>
-        <ExecutiveReportPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <ExecutiveReportPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     expect(await screen.findByText(/executive summary/i)).toBeInTheDocument();
@@ -54,9 +59,11 @@ describe("ExecutiveReport page", () => {
   it("shows the consent modal before the first generation", async () => {
     mockFetch({ aiEnabled: true, reports: [] });
     render(
-      <AuthProvider>
-        <ExecutiveReportPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <ExecutiveReportPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: /generate/i }));

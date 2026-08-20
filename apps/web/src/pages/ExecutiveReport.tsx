@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { AiConsentModal } from "../components/AiConsentModal";
 import { AiDisabledBanner } from "../components/AiDisabledBanner";
 import { hasAiConsent, grantAiConsent } from "../lib/aiConsent";
+import { downloadMarkdown } from "../lib/downloadMarkdown";
 
 interface ExecutiveReportView {
   id: string;
@@ -89,6 +91,21 @@ export function ExecutiveReportPage() {
       {reports.map((report) => (
         <div key={report.id} className="mb-6 rounded-2xl border border-line bg-surface p-5">
           <p className="mb-3 font-mono text-[11px] text-ink-muted">{new Date(report.createdAt).toLocaleString()}</p>
+          <div className="mb-3 flex gap-3">
+            <button
+              onClick={() => downloadMarkdown(`executive-report-${report.id}.md`, `*Conteúdo gerado por IA*\n\n${report.content}`)}
+              className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-muted hover:border-ink-muted-2 hover:text-ink"
+            >
+              Export Markdown
+            </button>
+            <Link
+              to={`/executive-reports/${report.id}/print`}
+              target="_blank"
+              className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-muted hover:border-ink-muted-2 hover:text-ink"
+            >
+              Export PDF
+            </Link>
+          </div>
           <pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{report.content}</pre>
         </div>
       ))}

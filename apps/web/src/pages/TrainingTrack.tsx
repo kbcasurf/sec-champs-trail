@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { AiConsentModal } from "../components/AiConsentModal";
 import { AiDisabledBanner } from "../components/AiDisabledBanner";
 import { hasAiConsent, grantAiConsent } from "../lib/aiConsent";
+import { downloadMarkdown } from "../lib/downloadMarkdown";
 
 interface TrainingModuleView {
   order: number;
@@ -144,6 +146,27 @@ export function TrainingTrackPage() {
           <p className="mb-3 font-mono text-[11px] text-ink-muted">
             {track.techStack} — {track.experienceLevel} — {track.hoursPerWeek}h/week — {new Date(track.createdAt).toLocaleString()}
           </p>
+          <div className="mb-3 flex gap-3">
+            <button
+              onClick={() =>
+                downloadMarkdown(
+                  `training-track-${track.id}.md`,
+                  `# Training track — ${track.techStack}\n\n*Conteúdo gerado por IA*\n\n` +
+                    track.modules.map((m) => `## ${m.title}\n\n${m.content}`).join("\n\n"),
+                )
+              }
+              className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-muted hover:border-ink-muted-2 hover:text-ink"
+            >
+              Export Markdown
+            </button>
+            <Link
+              to={`/training-tracks/${track.id}/print`}
+              target="_blank"
+              className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-muted hover:border-ink-muted-2 hover:text-ink"
+            >
+              Export PDF
+            </Link>
+          </div>
           {track.modules.map((module) => (
             <div key={module.order} className="mb-4">
               <h3 className="mb-1 font-display text-sm font-semibold text-ink">{module.title}</h3>

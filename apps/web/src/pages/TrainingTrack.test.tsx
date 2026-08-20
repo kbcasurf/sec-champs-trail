@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "../auth/AuthContext";
 import { TrainingTrackPage } from "./TrainingTrack";
 
@@ -39,9 +40,11 @@ describe("TrainingTrack page", () => {
   it("shows the disabled banner when AI is not configured", async () => {
     mockFetch({ aiEnabled: false, tracks: [] });
     render(
-      <AuthProvider>
-        <TrainingTrackPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <TrainingTrackPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     expect(await screen.findByText(/ai features are not configured/i)).toBeInTheDocument();
@@ -51,9 +54,11 @@ describe("TrainingTrack page", () => {
   it("shows the generation form and history when AI is configured", async () => {
     mockFetch({ aiEnabled: true, tracks: [TRACK] });
     render(
-      <AuthProvider>
-        <TrainingTrackPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <TrainingTrackPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     expect(await screen.findByRole("button", { name: /generate/i })).toBeInTheDocument();
@@ -63,9 +68,11 @@ describe("TrainingTrack page", () => {
   it("shows the consent modal before the first generation, then submits after confirming", async () => {
     mockFetch({ aiEnabled: true, tracks: [] });
     render(
-      <AuthProvider>
-        <TrainingTrackPage />
-      </AuthProvider>,
+      <BrowserRouter>
+        <AuthProvider>
+          <TrainingTrackPage />
+        </AuthProvider>
+      </BrowserRouter>,
     );
 
     fireEvent.change(await screen.findByLabelText(/tech stack/i), { target: { value: "Node.js" } });
