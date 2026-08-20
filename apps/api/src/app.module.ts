@@ -13,6 +13,7 @@ import { ChecklistProgressModule } from "./checklist-progress/checklist-progress
 import { ActionPlansModule } from "./action-plans/action-plans.module";
 import { AiModule } from "./ai/ai.module";
 import { TrainingTracksModule } from "./training-tracks/training-tracks.module";
+import { ExecutiveReportsModule } from "./executive-reports/executive-reports.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TrainingTracksModule } from "./training-tracks/training-tracks.module";
     ActionPlansModule,
     AiModule,
     TrainingTracksModule,
+    ExecutiveReportsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
