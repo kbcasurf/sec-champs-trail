@@ -6,6 +6,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { AssessmentForm } from "./pages/AssessmentForm";
 import { ChecklistLibrary } from "./pages/ChecklistLibrary";
 import { ActionPlanPage } from "./pages/ActionPlan";
+import { TrainingTrackPage } from "./pages/TrainingTrack";
 import { TeamsAdmin } from "./pages/TeamsAdmin";
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/assessment/new" element={<AssessmentForm />} />
             <Route path="/checklist" element={<ChecklistLibrary />} />
             <Route path="/action-plan" element={<ActionPlanPage />} />
+            <Route path="/training-tracks" element={<TrainingTrackPage />} />
             <Route path="/teams" element={<TeamsAdmin />} />
           </Route>
         </Routes>
