@@ -73,6 +73,25 @@ describe("AiProviderService", () => {
       expect(body.messages).toEqual([{ role: "user", content: "user" }]);
     });
 
+    it("extracts the text block when the response includes a thinking block first (Anthropic extended thinking)", async () => {
+      process.env.AI_PROVIDER_API_KEY = "test-key";
+      process.env.AI_PROVIDER_API_FORMAT = "anthropic";
+      const fakeFetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          content: [
+            { type: "thinking", thinking: "reasoning about the request...", signature: "abc" },
+            { type: "text", text: "hello after thinking" },
+          ],
+        }),
+      });
+
+      const result = await new AiProviderService().generate("sys", "user", fakeFetch as unknown as typeof fetch);
+
+      expect(result).toBe("hello after thinking");
+    });
+
     it("respects AI_PROVIDER_API_URL and AI_PROVIDER_MODEL overrides", async () => {
       process.env.AI_PROVIDER_API_KEY = "test-key";
       process.env.AI_PROVIDER_API_URL = "https://my-proxy.example.com/v1/chat/completions";
