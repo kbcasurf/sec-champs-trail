@@ -1,10 +1,12 @@
-import { BadGatewayException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadGatewayException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AiProviderService } from "../ai/ai-provider.service";
 import { buildExecutiveReportPrompt, parseExecutiveReportResponse, TeamSummary } from "./executive-report-generator";
 
 @Injectable()
 export class ExecutiveReportsService {
+  private readonly logger = new Logger(ExecutiveReportsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiProvider: AiProviderService,
@@ -53,7 +55,8 @@ export class ExecutiveReportsService {
     try {
       const raw = await this.aiProvider.generate(systemPrompt, userPrompt);
       content = parseExecutiveReportResponse(raw);
-    } catch {
+    } catch (err) {
+      this.logger.error("Failed to generate the executive report", err instanceof Error ? err.stack : err);
       throw new BadGatewayException("Failed to generate the executive report. Please try again.");
     }
 

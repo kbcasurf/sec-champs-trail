@@ -1,4 +1,4 @@
-import { BadGatewayException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadGatewayException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ExperienceLevel } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AiProviderService } from "../ai/ai-provider.service";
@@ -12,6 +12,8 @@ interface GenerateInput {
 
 @Injectable()
 export class TrainingTracksService {
+  private readonly logger = new Logger(TrainingTracksService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiProvider: AiProviderService,
@@ -53,7 +55,8 @@ export class TrainingTracksService {
     try {
       const raw = await this.aiProvider.generate(systemPrompt, userPrompt);
       modules = parseTrainingTrackResponse(raw);
-    } catch {
+    } catch (err) {
+      this.logger.error("Failed to generate a training track", err instanceof Error ? err.stack : err);
       throw new BadGatewayException("Failed to generate a training track. Please try again.");
     }
 
