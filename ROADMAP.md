@@ -14,8 +14,8 @@ next to the plan.
 ```
 Phase 0  ████████████████████ 100%  Implemented (main)
 Phase 1a ████████████████████ 100%  Implemented (main)
-Phase 1b ░░░░░░░░░░░░░░░░░░░░   0%  Next — spec not started yet
-Phase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Waiting on Phase 1b
+Phase 1b ████████████████████ 100%  Implemented (feat/fase1b-ai-layer)
+Phase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Next — spec not started yet
 Phase 3  ░░░░░░░░░░░░░░░░░░░░   0%  Waiting on Phase 2
 ```
 
@@ -83,24 +83,34 @@ whether a team exists (500 instead of 400/404 on an invalid teamId); admins see
 `/checklist` and `/action-plan` blank (only `/dashboard` has a team selector); the e2e
 suite has intermittent flakiness from Jest parallelism (no `maxWorkers: 1`).
 
-## Phase 1b — AI layer
+## Phase 1b — AI layer ✅ Implemented
 
 **Goal:** complete the original PRD MVP with the features that depend on an
 AI provider configured by the user.
 
-**Scope** (PRD F3 + F5):
+**Delivered** (branch `feat/fase1b-ai-layer`, not yet merged to `main`):
+- **`AiProviderService`**: vendor-agnostic HTTP adapter (OpenAI- and Anthropic-shaped
+  APIs, no vendor SDK) configured entirely via `AI_PROVIDER_*` env vars; `GET /api/ai/status`
+  exposes whether it's configured; every AI-backed route returns 403 when it isn't.
 - **F3 — Training Track Generator**: from the team's tech stack, experience level, and
   available time, generates a study track (prioritized topics, practical exercises,
-  quiz), exportable to Markdown/PDF.
+  quiz); `POST`/`GET /api/teams/:teamId/training-tracks`; exportable to Markdown/PDF
+  from the Web app.
 - **F5 — Executive Report**: a report in executive language generated from the
   Phase 1a maturity and progress data, to justify investment in the program to
-  leadership.
+  leadership; `POST`/`GET /api/executive-reports` (admin only).
+- Prompt design with an explicit untrusted-data fence around user- and org-controlled
+  free text; strict-JSON response contract parsed via a shared `extractJson` helper
+  hardened against embedded Markdown code fences in the model's own output.
+- AI consent modal and an "AI not configured" banner in the Web app; AI-generated
+  content labeled as such in `ATTRIBUTION.md`.
 
-Requires: prompt design, model response schema validation, generated-result caching.
-AI-generated content must be labeled as such, distinguishable from the original OWASP
-content (see `ATTRIBUTION.md`).
+**Documents:**
+- Spec: `docs/superpowers/specs/2026-08-19-fase1b-ai-layer-design.md`
+- Plan: `docs/superpowers/plans/2026-08-19-fase1b-ai-layer.md`
 
-**Status:** spec not started yet. Next item in the backlog.
+**Status:** all 14 planned tasks implemented and reviewed, including a final
+whole-branch cross-cutting fix pass. Pending merge to `main`.
 
 ## Phase 2 — Post-MVP
 
@@ -113,7 +123,7 @@ content (see `ATTRIBUTION.md`).
 - **F7 — Community / Knowledge Sharing**: a space for champions to share findings and
   questions (a simple forum or a webhook to Discord/Slack).
 
-**Status:** waiting on Phase 1b to complete.
+**Status:** spec not started yet. Next item in the backlog.
 
 ## Phase 3 — Expansion
 
