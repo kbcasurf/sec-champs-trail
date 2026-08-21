@@ -65,8 +65,14 @@ const ADAPTERS: Record<AiProviderFormat, AiAdapter> = {
       },
     }),
     extractContent: (json) => {
-      const content = json.content as Array<{ text?: string }> | undefined;
-      return content?.[0]?.text ?? "";
+      const content = json.content as Array<{ type?: string; text?: string }> | undefined;
+      if (!content) return "";
+      // A thinking-enabled response puts its reasoning in an earlier block with no "text"
+      // field (type: "thinking") -- the real answer is the first block explicitly typed
+      // "text", not necessarily content[0]. Fall back to the first block with a text
+      // string for responses/fixtures that omit "type" altogether.
+      const textBlock = content.find((block) => block.type === "text") ?? content.find((block) => typeof block.text === "string");
+      return textBlock?.text ?? "";
     },
   },
 };

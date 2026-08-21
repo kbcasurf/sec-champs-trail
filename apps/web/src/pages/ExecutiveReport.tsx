@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { AiConsentModal } from "../components/AiConsentModal";
 import { AiDisabledBanner } from "../components/AiDisabledBanner";
+import { Markdown } from "../components/Markdown";
 import { hasAiConsent, grantAiConsent } from "../lib/aiConsent";
 import { downloadMarkdown } from "../lib/downloadMarkdown";
 
@@ -34,14 +35,19 @@ export function ExecutiveReportPage() {
   async function doGenerate() {
     setGenerating(true);
     setError(null);
-    const res = await apiFetch("/executive-reports", { method: "POST" });
-    if (res.ok) {
-      const report = await res.json();
-      setReports((prev) => [report, ...prev]);
-    } else {
+    try {
+      const res = await apiFetch("/executive-reports", { method: "POST" });
+      if (res.ok) {
+        const report = await res.json();
+        setReports((prev) => [report, ...prev]);
+      } else {
+        setError("Failed to generate the executive report. Please try again.");
+      }
+    } catch {
       setError("Failed to generate the executive report. Please try again.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   }
 
   function handleGenerateClick() {
@@ -76,7 +82,7 @@ export function ExecutiveReportPage() {
           disabled={generating}
           className="rounded-lg bg-accent px-4.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide text-accent-text hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Generate report
+          {generating ? "Generating…" : "Generate report"}
         </button>
       </div>
 
@@ -106,7 +112,7 @@ export function ExecutiveReportPage() {
               Export PDF
             </Link>
           </div>
-          <pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{report.content}</pre>
+          <Markdown text={report.content} />
         </div>
       ))}
 

@@ -11,6 +11,7 @@ describe("buildTrainingTrackPrompt", () => {
     });
 
     expect(systemPrompt).toContain("STRICT JSON");
+    expect(systemPrompt).toContain("do not use tables, links, images, blockquotes, or code fences");
     expect(userPrompt).toContain("Node.js, Express");
     expect(userPrompt).toContain("intermediate");
     expect(userPrompt).toContain("4 hours/week");

@@ -4,6 +4,7 @@ import { apiFetch } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { AiConsentModal } from "../components/AiConsentModal";
 import { AiDisabledBanner } from "../components/AiDisabledBanner";
+import { Markdown } from "../components/Markdown";
 import { hasAiConsent, grantAiConsent } from "../lib/aiConsent";
 import { downloadMarkdown } from "../lib/downloadMarkdown";
 
@@ -52,17 +53,22 @@ export function TrainingTrackPage() {
     if (!teamId) return;
     setGenerating(true);
     setError(null);
-    const res = await apiFetch(`/teams/${teamId}/training-tracks`, {
-      method: "POST",
-      body: JSON.stringify({ techStack, experienceLevel, hoursPerWeek }),
-    });
-    if (res.ok) {
-      const track = await res.json();
-      setTracks((prev) => [track, ...prev]);
-    } else {
+    try {
+      const res = await apiFetch(`/teams/${teamId}/training-tracks`, {
+        method: "POST",
+        body: JSON.stringify({ techStack, experienceLevel, hoursPerWeek }),
+      });
+      if (res.ok) {
+        const track = await res.json();
+        setTracks((prev) => [track, ...prev]);
+      } else {
+        setError("Failed to generate a training track. Please try again.");
+      }
+    } catch {
       setError("Failed to generate a training track. Please try again.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   }
 
   function handleGenerateClick() {
@@ -129,7 +135,7 @@ export function TrainingTrackPage() {
           disabled={generating || !teamId || !techStack}
           className="rounded-lg bg-accent px-4.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide text-accent-text hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Generate track
+          {generating ? "Generating…" : "Generate track"}
         </button>
       </div>
 
@@ -170,7 +176,7 @@ export function TrainingTrackPage() {
           {track.modules.map((module) => (
             <div key={module.order} className="mb-4">
               <h3 className="mb-1 font-display text-sm font-semibold text-ink">{module.title}</h3>
-              <pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{module.content}</pre>
+              <Markdown text={module.content} />
             </div>
           ))}
         </div>

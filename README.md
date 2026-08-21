@@ -9,13 +9,15 @@ full product vision and `ROADMAP.md` for the current status of each phase.
 
 ## Status
 
-**Phase 0 (Foundation) and Phase 1a (MVP without AI): implemented.** The product is
-already usable end to end **without** any AI key configured — champion program maturity
-assessment, checklist library, and a rule-based action plan, all described below. The AI
-layer (training track generation and executive report) is the scope of Phase 1b, the
-next roadmap item. Details:
-`ROADMAP.md`, `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md` and
-`docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`.
+**Phase 0 (Foundation), Phase 1a (MVP without AI), and Phase 1b (AI layer): implemented.**
+The product is fully usable end to end **without** any AI key configured — champion
+program maturity assessment, checklist library, and a rule-based action plan, all
+described below. With an AI provider key configured (optional — see "AI-powered
+features" under Quickstart), two more features become available: a Training Track
+Generator and an Executive Report. Details:
+`ROADMAP.md`, `docs/superpowers/plans/2026-08-10-fase0-fundacao-execution-log.md`,
+`docs/superpowers/plans/2026-08-13-fase1a-mvp-execution-log.md`, and
+`docs/superpowers/plans/2026-08-19-fase1b-ai-layer.md`.
 
 **UI design system: implemented.** All six screens (Login, Dashboard, New assessment,
 Checklist, Action plan, Teams) share a dark, branded visual identity instead of
@@ -53,6 +55,20 @@ Manifesto — not the security posture of the code teams produce.
   AI): the 3 weakest principles go into the 3-month bucket, the next 3 into the 6-month
   bucket, and the 4 strongest into the 12-month bucket. Regenerating the plan never
   resets progress already marked in the checklist library — the two are independent.
+- **Training Track Generator** *(F3, at `/training-tracks`, requires an AI provider
+  key)* — from a team's tech stack, experience level, and available hours per week,
+  generates a personalized study track: a set of prioritized modules, each with key
+  concepts, hands-on exercises, and a reinforcement quiz. Available to both admins and
+  champions.
+- **Executive Report** *(F5, at `/executive-reports`, admin only, requires an AI
+  provider key)* — an executive-language report generated from every team's maturity
+  and checklist-completion data, meant to help justify continued investment in the
+  program to leadership.
+
+Both AI-powered features require the user to acknowledge a data-sharing consent notice
+before each generation, show a disabled "Generating…" state on their button for the
+duration of the request, render the result as formatted content (headings, lists, bold
+text — not raw Markdown syntax), and can be exported to Markdown or PDF.
 
 ## Design
 
@@ -83,6 +99,11 @@ consequences are recorded in
 6. Under **Action plan**, click "Generate new plan" to generate the prioritized roadmap.
 7. Under **Checklist**, check off item progress as it gets implemented — this progress
    is reflected in the action plan and survives a plan regeneration.
+8. If an AI provider key is configured (see "AI-powered features" under Quickstart),
+   under **Training track**, describe the team's tech stack and experience level and
+   click "Generate track" for a personalized study track.
+9. As an admin, under **Executive report**, click "Generate report" for an
+   executive-language summary of every team's maturity, ready to share with leadership.
 
 ## Quickstart
 
@@ -196,7 +217,10 @@ same either way. To enable them, set `AI_PROVIDER_API_KEY` in `.env` (see
 key itself) and restart the stack. `AI_PROVIDER_API_URL`, if set, must start with
 `https://`. The app never calls out to an AI provider on its own -- only when a user
 explicitly clicks "Generate" after acknowledging the consent notice, and every
-AI-generated result is labeled as such in the UI.
+AI-generated result is labeled as such in the UI. While a generation request is in
+flight the button shows a disabled "Generating…" state (a real call typically takes
+15-35 seconds); the result renders as formatted content, not raw Markdown syntax, and
+can be exported to Markdown or PDF from the same page.
 
 ### Running without Docker (development)
 

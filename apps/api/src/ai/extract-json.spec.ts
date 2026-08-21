@@ -1,47 +1,73 @@
 import { extractJson } from "./extract-json";
 
 describe("extractJson", () => {
-  it("parses a bare JSON object", () => {
-    expect(extractJson('{"a": 1}')).toEqual({ a: 1 });
+  it("parses a bare JSON object with a properly-escaped newline", () => {
+    const raw = '{"report": "line one\\nline two"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "line one\nline two" });
   });
 
-  it("parses JSON wrapped in a ```json fence", () => {
-    const raw = 'Here you go:\n```json\n{"a": 1}\n```\nHope that helps!';
-    expect(extractJson(raw)).toEqual({ a: 1 });
+  it("repairs a literal unescaped newline inside a JSON string value (the confirmed Finding #4 defect)", () => {
+    // The template literal below embeds an ACTUAL newline byte (0x0A) inside
+    // the string value, not the two-character escape sequence -- this is
+    // exactly what plain JSON.parse rejects with an "invalid/bad control
+    // character" error, and what the real Anthropic response in Finding #4
+    // was shown (via curl, outside the app) to contain.
+    const raw = '{"report": "First paragraph.\n- Bullet one\n- Bullet two"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({
+      report: "First paragraph.\n- Bullet one\n- Bullet two",
+    });
   });
 
-  it("parses JSON wrapped in a plain ``` fence", () => {
-    const raw = '```\n{"a": 1}\n```';
-    expect(extractJson(raw)).toEqual({ a: 1 });
+  it("repairs a literal unescaped tab and carriage return inside a string value", () => {
+    const raw = '{"content": "before\tafter\rend"}';
+    expect(extractJson<{ content: string }>(raw)).toEqual({ content: "before\tafter\rend" });
   });
 
-  it("parses a JSON object surrounded by prose without fences", () => {
-    const raw = 'Sure, here is the result: {"a": 1} — let me know if you need changes.';
-    expect(extractJson(raw)).toEqual({ a: 1 });
+  it("does not corrupt whitespace used as JSON structural formatting outside of strings", () => {
+    const raw = '{\n  "report": "one line, no control chars"\n}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "one line, no control chars" });
   });
 
-  it("returns null for unparseable content", () => {
-    expect(extractJson("not json at all")).toBeNull();
+  it("does not get confused by an escaped quote inside a string value that also has a raw newline", () => {
+    const raw = '{"report": "She said \\"hello\\".\nNext line."}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: 'She said "hello".\nNext line.' });
+  });
+
+  it("still returns null for structurally malformed JSON (missing closing brace)", () => {
+    const raw = '{"report": "unterminated';
+    expect(extractJson(raw)).toBeNull();
+  });
+
+  it("repairs a raw control character even when the JSON is wrapped in a fenced code block", () => {
+    const raw = '```json\n{"report": "line one\nline two"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "line one\nline two" });
+  });
+
+  it("parses JSON wrapped in a plain fence with no language tag", () => {
+    const raw = '```\n{"report": "already escaped\\nvalue"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "already escaped\nvalue" });
+  });
+
+  it("parses JSON surrounded by prose with no fence at all, via brace-slicing", () => {
+    const raw = 'Here is the result: {"a": 1} — done.';
+    expect(extractJson<{ a: number }>(raw)).toEqual({ a: 1 });
+  });
+
+  it("returns null for a raw string that isn't JSON at all", () => {
+    expect(extractJson("not json")).toBeNull();
   });
 
   it("returns null for an empty string", () => {
     expect(extractJson("")).toBeNull();
   });
 
-  it("parses a bare JSON object whose string value contains an inner code fence", () => {
-    const raw = JSON.stringify({
-      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
-    });
-    expect(extractJson(raw)).toEqual({
-      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
-    });
+  it("parses a JSON string value that itself contains an inner code-fence-looking substring", () => {
+    const raw = '{"report": "See ```js\\nconst x=1;\\n``` above"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "See ```js\nconst x=1;\n``` above" });
   });
 
-  it("parses a ```json-fenced JSON object whose string value also contains an inner code fence", () => {
-    const payload = {
-      content: "Try this:\n```js\nconsole.log('hi');\n```\nThat's it.",
-    };
-    const raw = "```json\n" + JSON.stringify(payload) + "\n```";
-    expect(extractJson(raw)).toEqual(payload);
+  it("parses the same inner-fence case when the JSON is also wrapped in an outer ```json fence", () => {
+    const raw = '```json\n{"report": "See ```js\\nconst x=1;\\n``` above"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "See ```js\nconst x=1;\n``` above" });
   });
 });

@@ -17,7 +17,7 @@ export interface ParsedTrainingModule {
 const SYSTEM_PROMPT = `You design application-security training tracks for a Security Champions program.
 Respond with STRICT JSON only -- no prose, no markdown code fences around the JSON -- matching exactly this shape:
 {"modules": [{"title": string, "content": string}]}
-Each module's "content" is a single Markdown string containing: a short explanation of the topic, 1-2 suggested hands-on exercises (reference tools like OWASP Juice Shop or WebGoat where relevant), and a short reinforcement quiz (2-3 questions with answers) at the end.
+Each module's "content" is a single Markdown string containing: a short explanation of the topic, 1-2 suggested hands-on exercises (reference tools like OWASP Juice Shop or WebGoat where relevant), and a short reinforcement quiz (2-3 questions with answers) at the end. Formatting in this field is limited to headings (#, ##, ###), **bold** text, and lists ("- " or "1. ") -- do not use tables, links, images, blockquotes, or code fences.
 Generate between 3 and 8 modules, ordered from foundational to advanced, sized to fit the given weekly time budget.`;
 
 export function buildTrainingTrackPrompt(input: TrainingTrackPromptInput): {
