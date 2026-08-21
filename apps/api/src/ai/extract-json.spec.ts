@@ -42,4 +42,32 @@ describe("extractJson", () => {
     const raw = '```json\n{"report": "line one\nline two"}\n```';
     expect(extractJson<{ report: string }>(raw)).toEqual({ report: "line one\nline two" });
   });
+
+  it("parses JSON wrapped in a plain fence with no language tag", () => {
+    const raw = '```\n{"report": "already escaped\\nvalue"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "already escaped\nvalue" });
+  });
+
+  it("parses JSON surrounded by prose with no fence at all, via brace-slicing", () => {
+    const raw = 'Here is the result: {"a": 1} — done.';
+    expect(extractJson<{ a: number }>(raw)).toEqual({ a: 1 });
+  });
+
+  it("returns null for a raw string that isn't JSON at all", () => {
+    expect(extractJson("not json")).toBeNull();
+  });
+
+  it("returns null for an empty string", () => {
+    expect(extractJson("")).toBeNull();
+  });
+
+  it("parses a JSON string value that itself contains an inner code-fence-looking substring", () => {
+    const raw = '{"report": "See ```js\\nconst x=1;\\n``` above"}';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "See ```js\nconst x=1;\n``` above" });
+  });
+
+  it("parses the same inner-fence case when the JSON is also wrapped in an outer ```json fence", () => {
+    const raw = '```json\n{"report": "See ```js\\nconst x=1;\\n``` above"}\n```';
+    expect(extractJson<{ report: string }>(raw)).toEqual({ report: "See ```js\nconst x=1;\n``` above" });
+  });
 });

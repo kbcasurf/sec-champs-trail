@@ -35,14 +35,19 @@ export function ExecutiveReportPage() {
   async function doGenerate() {
     setGenerating(true);
     setError(null);
-    const res = await apiFetch("/executive-reports", { method: "POST" });
-    if (res.ok) {
-      const report = await res.json();
-      setReports((prev) => [report, ...prev]);
-    } else {
+    try {
+      const res = await apiFetch("/executive-reports", { method: "POST" });
+      if (res.ok) {
+        const report = await res.json();
+        setReports((prev) => [report, ...prev]);
+      } else {
+        setError("Failed to generate the executive report. Please try again.");
+      }
+    } catch {
       setError("Failed to generate the executive report. Please try again.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   }
 
   function handleGenerateClick() {

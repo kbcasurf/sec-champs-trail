@@ -53,17 +53,22 @@ export function TrainingTrackPage() {
     if (!teamId) return;
     setGenerating(true);
     setError(null);
-    const res = await apiFetch(`/teams/${teamId}/training-tracks`, {
-      method: "POST",
-      body: JSON.stringify({ techStack, experienceLevel, hoursPerWeek }),
-    });
-    if (res.ok) {
-      const track = await res.json();
-      setTracks((prev) => [track, ...prev]);
-    } else {
+    try {
+      const res = await apiFetch(`/teams/${teamId}/training-tracks`, {
+        method: "POST",
+        body: JSON.stringify({ techStack, experienceLevel, hoursPerWeek }),
+      });
+      if (res.ok) {
+        const track = await res.json();
+        setTracks((prev) => [track, ...prev]);
+      } else {
+        setError("Failed to generate a training track. Please try again.");
+      }
+    } catch {
       setError("Failed to generate a training track. Please try again.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   }
 
   function handleGenerateClick() {

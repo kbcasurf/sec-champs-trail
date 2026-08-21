@@ -21,7 +21,12 @@ export function Markdown({ text }: { text: string }) {
     if (heading) {
       const level = heading[1].length;
       const Tag = (`h${level}` as unknown) as "h1" | "h2" | "h3";
-      const classes = level === 1 ? "font-display text-xl font-bold text-ink" : level === 2 ? "font-display text-lg font-bold text-ink" : "font-display text-base font-bold text-ink";
+      const classes =
+        level === 1
+          ? "font-display text-xl font-bold text-ink mt-4 first:mt-0"
+          : level === 2
+            ? "font-display text-lg font-bold text-ink mt-4 first:mt-0"
+            : "font-display text-base font-bold text-ink mt-4 first:mt-0";
       blocks.push(
         <Tag key={key++} className={classes}>
           {renderInline(heading[2])}
@@ -66,5 +71,5 @@ export function Markdown({ text }: { text: string }) {
     );
   }
 
-  return <>{blocks}</>;
+  return <div className="space-y-3">{blocks}</div>;
 }

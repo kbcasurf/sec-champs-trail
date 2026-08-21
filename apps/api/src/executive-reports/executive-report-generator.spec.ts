@@ -16,6 +16,7 @@ describe("buildExecutiveReportPrompt", () => {
 
     expect(systemPrompt).toContain("STRICT JSON");
     expect(systemPrompt).not.toContain("industry benchmark");
+    expect(systemPrompt).toContain("do not use tables, links, images, blockquotes, or code fences");
     expect(userPrompt).toContain("Acme Corp");
     expect(userPrompt).toContain("Payments");
     expect(userPrompt).toContain("Champion Advocacy: 2/4");

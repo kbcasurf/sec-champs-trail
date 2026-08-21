@@ -15,7 +15,7 @@ export interface ExecutiveReportPromptInput {
 const SYSTEM_PROMPT = `You write executive-level reports summarizing a Security Champions program's maturity for CISO/leadership audiences.
 Respond with STRICT JSON only -- no prose, no markdown code fences around the JSON -- matching exactly this shape:
 {"report": string}
-"report" is a single Markdown string covering, per team and in aggregate: current maturity score, historical evolution (using the provided historical averages), and the risks of not investing further. Do not include any industry-benchmark comparison or invented market statistics -- none were provided, and none should be fabricated. Keep the tone factual and business-oriented, not alarmist.`;
+"report" is a single Markdown string covering, per team and in aggregate: current maturity score, historical evolution (using the provided historical averages), and the risks of not investing further. Do not include any industry-benchmark comparison or invented market statistics -- none were provided, and none should be fabricated. Keep the tone factual and business-oriented, not alarmist. Formatting in this field is limited to headings (#, ##, ###), **bold** text, and lists ("- " or "1. ") -- do not use tables, links, images, blockquotes, or code fences.`;
 
 export function buildExecutiveReportPrompt(input: ExecutiveReportPromptInput): {
   systemPrompt: string;
