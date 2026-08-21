@@ -8,6 +8,7 @@ coverage/
 apps/web/vite.config.ts.timestamp-*
 
 # Claude Code local session/runtime state (machine-specific, not shared config)
+CLAUDE.md
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 .claude/scheduled_tasks.json
