@@ -1197,3 +1197,141 @@ decision" under Task 6 — and Findings #5/#6 are likewise now written up as **T
    rebuild once Tasks 4–6 are done, extended to also confirm: the executive report and
    training track pages show a generating state during a real AI call (Task 5) and render
    Markdown as formatted content, not raw text (Task 6).
+
+---
+
+## Second follow-up QA verification session (2026-08-21, after Tasks 4–6 were implemented)
+
+**Context:** Tasks 4, 5, and 6 above were implemented and committed on branch
+`worktree-qa-session-bugfixes` (commits `bdb57da`, `10934d0`, `5e21764`, plus review-fixup
+commit `ff2f417`). A further QA pass was run against a **Docker image rebuilt from this
+branch** (`docker compose -p sec-champs-trail up --build -d` from the worktree directory —
+the container that was already running had been left on a stale image pulled from
+`ghcr.io/kbcasurf/sec-champs-trail:latest`, predating even Task 1), against real Postgres
+data (reusing the existing `sec-champs-trail_championforge-db` volume, plus a freshly created
+`Red Team QA` team / `redteam.champion@example.com` champion), and real Anthropic API calls,
+driven live via Playwright MCP browser automation (not `claude-in-chrome` this time) so
+results could be watched in real time, covering both the admin and champion roles.
+
+### What's already tested and confirmed working — do not redo this
+
+- **Task 1**: Training Track and Executive Report both generated successfully
+  (`201 Created`) across multiple runs, as both admin and champion — no `502` observed.
+- **Task 2**: Unknown route renders the "Page not found" page with a working
+  "Go to dashboard" link.
+- **Task 3**: A champion navigating directly to `/teams` or `/executive-reports` is
+  redirected to `/dashboard` before any admin UI renders.
+- **Task 4**: No `502` / "AI response did not contain a valid ..." errors across repeated
+  Executive Report and Training Track generations in this session (consistent with the fix,
+  though this session did not specifically force the raw-control-character edge case the way
+  the original `curl` reproduction did).
+- **Task 5**: Both "Generate track" and "Generate report" buttons show a disabled
+  `"Generating…"` label for the duration of the AI call.
+- **Task 6**: Headings, bold text, and lists in AI-generated content all render as real HTML
+  elements, not raw Markdown syntax.
+- Full non-AI flows exercised without incident: admin login/logout, an invalid-password login
+  attempt (clean `401` + "Invalid credentials" message, no crash), Teams admin (create team,
+  create champion), champion login, the 10-question maturity assessment (submission + radar
+  chart), Checklist Library (checkbox toggling persists via `PATCH
+  .../checklist-progress/:id`, `200`), Action Plan generation (correctly reflects checklist
+  progress), Export Markdown on both the Training Track and Executive Report pages. No
+  unexpected browser console errors were observed anywhere in the session — only the
+  pre-existing, already-documented `401`/`404` noise before login / before an assessment or
+  action plan exists.
+- **New findings surfaced by this pass, not yet fixed — see below.**
+
+### New Finding #7 (Minor, cosmetic/completeness) — the Markdown renderer doesn't handle horizontal rules or tables
+
+**Reproduction:** Generated two Executive Reports as admin. Both prompts produce `---` as a
+section separator between team-level analyses, and the model occasionally formats a
+per-principle score breakdown as a GFM pipe table (observed in one of the two generations in
+this session) instead of a list.
+
+**Confirmed root cause:** `apps/web/src/components/Markdown.tsx`'s block-level scanner (lines
+17–72) only recognizes three block types — a heading (`^(#{1,3}) `), a list item (`^[-*] |
+^\d+\. `), and a blank line — before falling through to its generic paragraph branch (lines
+62–71). A line consisting of just `---` doesn't match any of the three, so it falls into the
+paragraph branch and renders as the literal three-character string `---`, not an `<hr>`. Same
+mechanism for a table row starting with `| Dimension | Score |`: it doesn't match the heading
+or list regexes either, so it renders as one long literal paragraph of pipe-delimited text
+instead of an HTML table. This isn't a regression in Task 6's implementation — Task 6's own
+"Dependency decision" explicitly scoped the hand-rolled renderer to only "the Markdown subset
+the two prompts actually ask the model to produce (headings, bold, lists)" and named tables as
+one of the syntaxes deliberately left unsupported — but the prompts themselves don't instruct
+the model to avoid `---` or tables, so the model reaches for both anyway in practice, which is
+exactly what happened in this session.
+
+**Suggested next step:** Decide (with the user, since it's the same kind of scope/dependency
+call Task 6 already made once) between: (a) extending the hand-rolled parser with a horizontal
+rule case and a minimal pipe-table case, keeping the zero-new-dependency approach; or (b)
+tightening `buildExecutiveReportPrompt()` / the training-track prompt to explicitly forbid
+`---` and tables, steering the model toward the syntax the renderer already supports. Not
+implemented in this session — this is a finding, not a fix.
+
+### New Finding #8 (Medium, data integrity/UX) — Teams admin allows creating multiple teams with the identical name
+
+**Reproduction:** On `/teams` as admin, created a team named "Red Team QA", then submitted
+the "New team" form again with the exact same name. Both requests returned `201 Created`
+(`POST /api/teams`), and the team list on the left then showed **two** buttons both labeled
+"Red Team QA", with no visible distinguishing detail (no ID, no creation date) to tell them
+apart before clicking into one.
+
+**Confirmed root cause:** `apps/api/src/teams/teams.service.ts:8-11`'s `create(name)` calls
+`this.prisma.team.create(...)` directly with no pre-check for an existing team with the same
+`name` in the organization. `apps/api/prisma/schema.prisma:47-61`'s `Team` model has no
+`@@unique` constraint on `name` (or on `[organizationId, name]`) to reject it at the database
+level either — only a plain `@@index([organizationId])`. So nothing in the stack, from the UI
+down to the schema, currently prevents this.
+
+**Suggested next step:** Add a `@@unique([organizationId, name])` constraint at the schema
+level (new migration) and surface the resulting conflict as a `409`/validation error in
+`TeamsService.create()` / `TeamsController`, with a clear inline message in the "New team"
+form — the same pattern already used for the empty-name case (`apps/web` already shows "Could
+not create team." on a `400`). Not implemented in this session — this is a finding, not a fix.
+
+### New Finding #9 (Minor, i18n/polish) — a Portuguese string on an otherwise all-English UI
+
+**Reproduction:** The label directly under the "Generate track" / "Generate report" button,
+and the same label repeated in the exported Markdown's attribution line and on both print
+pages, all read **"Conteúdo gerado por IA"** (Portuguese for "Content generated by AI"), while
+every other string in the app — nav labels, form fields, empty states, error messages — is in
+English.
+
+**Confirmed locations:** `apps/web/src/pages/TrainingTrack.tsx:148` (on-screen label) and
+`:160` (Export Markdown attribution line); `apps/web/src/pages/ExecutiveReport.tsx:95` and
+`:102` (same two spots); `apps/web/src/pages/TrainingTrackPrint.tsx:41`; and
+`apps/web/src/pages/ExecutiveReportPrint.tsx:30`. All five occurrences are the same literal
+string, so this looks like one label that was written in Portuguese from the start (not a
+one-off typo introduced later) and never translated when the rest of the app's copy was
+written in English.
+
+**Suggested next step:** Replace all five occurrences with an English equivalent (e.g.
+"AI-generated content"), matching the rest of the app's copy. A small, mechanical
+find-and-replace across the five files above — no design or product decision needed. Not
+implemented in this session — this is a finding, not a fix.
+
+### Operational note (not a bug) — the print routes' native `window.print()` blocks CDP-driven browser automation
+
+Navigating to `/training-tracks/:id/print` or `/executive-reports/:id/print` triggers the
+browser's native `window.print()` call immediately on load — correct, expected behavior for a
+real user (already confirmed in the first follow-up session above), but when the browser is
+being driven over CDP (as both Playwright MCP and `claude-in-chrome` do), the native print
+dialog fully blocks the automation connection: every subsequent tool call — including
+navigating away, taking a snapshot, listing tabs, and even closing the tab — hung until a
+human manually dismissed the print dialog from outside the automation session. This cost real
+time in this session and will do so again for any future live-browser QA pass, and would
+break a headless CI run outright. Not a defect in the app — a real user's print dialog is
+supposed to appear — but worth flagging so a future automated E2E suite covering these two
+routes stubs/mocks `window.print` (e.g. `vi.spyOn(window, "print").mockImplementation(() =>
+{})`) rather than driving them via a live, real browser session the way the rest of this
+plan's manual verification steps do.
+
+### Where to resume (updated 2026-08-21)
+
+Tasks 1–6 are now all **done and manually verified live** (see both "What's already tested and
+confirmed working" sections above). Findings #7, #8, and #9 above are newly surfaced,
+confirmed by reading the actual code (not guessed at), and **not yet fixed or written up as
+formal TDD tasks** — that write-up (spec, files, test steps, and for #7 specifically a
+brainstorming pass on the same scope/dependency question Task 6 already raised once) is the
+next session's starting point, the same way Findings #4–#6 were written up as Tasks 4–6 before
+being implemented.
