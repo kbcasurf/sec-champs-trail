@@ -76,4 +76,55 @@ describe("ExecutiveReport page", () => {
       expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/executive-reports"), expect.objectContaining({ method: "POST" }));
     });
   });
+
+  it("shows generating state on button while AI generation is in flight", async () => {
+    let resolveGenerate: () => void;
+    const generatePromise = new Promise<{ ok: boolean; json: () => Promise<typeof REPORT> }>((resolve) => {
+      resolveGenerate = () => resolve({ ok: true, json: async () => REPORT });
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "a@example.com", role: "admin", teamId: null }) });
+        }
+        if (url.includes("/ai/status")) {
+          return Promise.resolve({ ok: true, json: async () => ({ enabled: true }) });
+        }
+        if (init?.method === "POST" && url.includes("/executive-reports")) {
+          return generatePromise;
+        }
+        if (url.includes("/executive-reports")) {
+          return Promise.resolve({ ok: true, json: async () => [] });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <ExecutiveReportPage />
+        </AuthProvider>
+      </BrowserRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /generate report/i }));
+
+    // Dismiss consent modal and confirm generation
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    // While fetch is unresolved, button should show "Generating…"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /generating/i })).toBeInTheDocument();
+    });
+
+    // After resolving, button should return to "Generate report"
+    resolveGenerate!();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /generate report/i })).toBeInTheDocument();
+    });
+  });
 });

@@ -76,7 +76,7 @@ export function ExecutiveReportPage() {
           disabled={generating}
           className="rounded-lg bg-accent px-4.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide text-accent-text hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Generate report
+          {generating ? "Generating…" : "Generate report"}
         </button>
       </div>
 

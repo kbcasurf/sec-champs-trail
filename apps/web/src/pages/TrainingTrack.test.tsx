@@ -90,4 +90,57 @@ describe("TrainingTrack page", () => {
       );
     });
   });
+
+  it("shows generating state on button while AI generation is in flight", async () => {
+    let resolveGenerate: () => void;
+    const generatePromise = new Promise<{ ok: boolean; json: () => Promise<typeof TRACK> }>((resolve) => {
+      resolveGenerate = () => resolve({ ok: true, json: async () => TRACK });
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes("/auth/me")) {
+          return Promise.resolve({ ok: true, json: async () => ({ id: "1", email: "c@example.com", role: "champion", teamId: "team-1" }) });
+        }
+        if (url.includes("/ai/status")) {
+          return Promise.resolve({ ok: true, json: async () => ({ enabled: true }) });
+        }
+        if (init?.method === "POST" && url.includes("/training-tracks")) {
+          return generatePromise;
+        }
+        if (url.includes("/training-tracks")) {
+          return Promise.resolve({ ok: true, json: async () => [] });
+        }
+        return Promise.resolve({ ok: false, json: async () => null });
+      }),
+    );
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <TrainingTrackPage />
+        </AuthProvider>
+      </BrowserRouter>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/tech stack/i), { target: { value: "Node.js" } });
+    fireEvent.change(screen.getByLabelText(/hours per week/i), { target: { value: "4" } });
+    fireEvent.click(screen.getByRole("button", { name: /generate track/i }));
+
+    // Dismiss consent modal and confirm generation
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    // While fetch is unresolved, button should show "Generating…"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /generating/i })).toBeInTheDocument();
+    });
+
+    // After resolving, button should return to "Generate track"
+    resolveGenerate!();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /generate track/i })).toBeInTheDocument();
+    });
+  });
 });

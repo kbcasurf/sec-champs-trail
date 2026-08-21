@@ -129,7 +129,7 @@ export function TrainingTrackPage() {
           disabled={generating || !teamId || !techStack}
           className="rounded-lg bg-accent px-4.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide text-accent-text hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Generate track
+          {generating ? "Generating…" : "Generate track"}
         </button>
       </div>
 
