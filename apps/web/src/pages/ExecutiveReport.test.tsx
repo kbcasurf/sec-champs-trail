@@ -127,4 +127,18 @@ describe("ExecutiveReport page", () => {
       expect(screen.getByRole("button", { name: /generate report/i })).toBeInTheDocument();
     });
   });
+
+  it("renders Markdown headings from report content as heading elements", async () => {
+    mockFetch({ aiEnabled: true, reports: [REPORT] });
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <ExecutiveReportPage />
+        </AuthProvider>
+      </BrowserRouter>,
+    );
+
+    // The REPORT has content "# Executive summary\n..." which should render as an h1 heading
+    expect(await screen.findByRole("heading", { level: 1, name: "Executive summary" })).toBeInTheDocument();
+  });
 });

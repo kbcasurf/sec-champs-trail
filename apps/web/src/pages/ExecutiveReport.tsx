@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { AiConsentModal } from "../components/AiConsentModal";
 import { AiDisabledBanner } from "../components/AiDisabledBanner";
+import { Markdown } from "../components/Markdown";
 import { hasAiConsent, grantAiConsent } from "../lib/aiConsent";
 import { downloadMarkdown } from "../lib/downloadMarkdown";
 
@@ -106,7 +107,7 @@ export function ExecutiveReportPage() {
               Export PDF
             </Link>
           </div>
-          <pre className="whitespace-pre-wrap font-body text-[13px] text-ink-body">{report.content}</pre>
+          <Markdown text={report.content} />
         </div>
       ))}
 

@@ -143,4 +143,18 @@ describe("TrainingTrack page", () => {
       expect(screen.getByRole("button", { name: /generate track/i })).toBeInTheDocument();
     });
   });
+
+  it("renders Markdown headings from module content as heading elements", async () => {
+    mockFetch({ aiEnabled: true, tracks: [TRACK] });
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <TrainingTrackPage />
+        </AuthProvider>
+      </BrowserRouter>,
+    );
+
+    // The TRACK has content "## Overview\n..." which should render as an h2 heading
+    expect(await screen.findByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();
+  });
 });
