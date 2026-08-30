@@ -17,7 +17,17 @@ function mockFetchForChampion() {
   );
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // AuthContext resolves /auth/me asynchronously, and pages like TrainingTrackPage
+  // fire their own effects only once that resolution updates `user`/`teamId`. A
+  // rendered test can finish (its `waitFor` condition is already true on first
+  // paint) before those effects run, so unstubbing `fetch` immediately can race
+  // ahead of them — the real `fetch` then rejects on the app's relative URLs
+  // (they're only valid resolved against `window.location`, which only a browser
+  // provides), a failure vitest reports as an "unhandled rejection" attributed to
+  // whichever test happened to be running. Flushing one macrotask first lets any
+  // already-scheduled effect run against the still-active mock before teardown.
+  await new Promise((resolve) => setTimeout(resolve, 0));
   vi.unstubAllGlobals();
   window.history.pushState({}, "", "/");
 });
