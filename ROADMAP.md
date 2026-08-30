@@ -14,10 +14,13 @@ next to the plan.
 ```
 Phase 0  ████████████████████ 100%  Implemented (main)
 Phase 1a ████████████████████ 100%  Implemented (main)
-Phase 1b ████████████████████ 100%  Implemented (feat/fase1b-ai-layer)
+Phase 1b ████████████████████ 100%  Implemented (main)
 Phase 2  ░░░░░░░░░░░░░░░░░░░░   0%  Next — spec not started yet
 Phase 3  ░░░░░░░░░░░░░░░░░░░░   0%  Waiting on Phase 2
 ```
+
+Between the Phase 1b merge and Phase 2 starting, two cross-cutting rounds of
+non-phase-numbered work also landed on `main` — see "Post-Phase 1b hardening" below.
 
 ## Phase 0 — Foundation ✅ Implemented
 
@@ -88,7 +91,7 @@ suite has intermittent flakiness from Jest parallelism (no `maxWorkers: 1`).
 **Goal:** complete the original PRD MVP with the features that depend on an
 AI provider configured by the user.
 
-**Delivered** (branch `feat/fase1b-ai-layer`, not yet merged to `main`):
+**Delivered** (branch `feat/fase1b-ai-layer`, merged to `main` on 2026-08-20, PR #17):
 - **`AiProviderService`**: vendor-agnostic HTTP adapter (OpenAI- and Anthropic-shaped
   APIs, no vendor SDK) configured entirely via `AI_PROVIDER_*` env vars; `GET /api/ai/status`
   exposes whether it's configured; every AI-backed route returns 403 when it isn't.
@@ -110,7 +113,42 @@ AI provider configured by the user.
 - Plan: `docs/superpowers/plans/2026-08-19-fase1b-ai-layer.md`
 
 **Status:** all 14 planned tasks implemented and reviewed, including a final
-whole-branch cross-cutting fix pass. Pending merge to `main`.
+whole-branch cross-cutting fix pass. Merged to `main`.
+
+## Post-Phase 1b — Cross-cutting hardening (not phase-numbered)
+
+Two rounds of reactive work landed on `main` around the Phase 1b merge. Neither maps to
+a PRD feature, so neither gets a phase number — they're tracked here instead.
+
+**Security hardening (2026-08-19)** — merged to `main` before Phase 1b (PR #12), then
+pulled into the `feat/fase1b-ai-layer` branch before its own merge. Closed 5 findings
+from `docs/security-review-2026-08-19.md`: constant-time login (closes a timing
+side-channel), `JWT_SECRET` minimum raised from 16 to 32 chars (deliberate breaking
+change), global + per-route rate limiting (`@nestjs/throttler`), security headers via
+`helmet`, and a `react-router` dependency bump (partial fix — the full advisory fix
+needs `react-router@8` + React 19, deferred).
+- ADR: `docs/adr/0004-security-hardening.md`
+- Spec: `docs/superpowers/specs/2026-08-19-security-hardening-design.md`
+- Plan: `docs/superpowers/plans/2026-08-19-security-hardening.md`
+- Execution log: `docs/superpowers/plans/2026-08-19-security-hardening-execution-log.md`
+
+**QA session bugfixes (2026-08-20, merged PR #18)** — a manual Playwright QA pass
+against the real Docker Compose stack (real Postgres, real Anthropic API calls) run
+right after the Phase 1b merge found the AI-powered features **completely broken in
+production**: Training Track Generator and Executive Report both failed with `502 Bad
+Gateway` on every request (bug in `apps/api/src/ai/ai-provider.service.ts`). Also fixed:
+unknown URLs rendered a blank page (no `path="*"` route), and `/teams` /
+`/executive-reports` rendered a fully interactive admin UI to a logged-in champion
+before the backend's existing RBAC rejected their requests.
+- Plan: `docs/superpowers/plans/2026-08-20-qa-session-bugfixes.md`
+
+A follow-up fix (PR #19, merged 2026-08-21) corrected the HTTPS Docker Compose file to
+pull the app image from GHCR by default instead of expecting a local build.
+
+**Lesson carried into Phase 2 planning:** Phase 1b's own execution log and review
+passes did not catch the `502` — only a live QA pass against real infrastructure did.
+Phase 2's plan should budget for the same kind of live verification before considering
+any AI- or backend-dependent feature done.
 
 ## Phase 2 — Post-MVP
 
